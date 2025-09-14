@@ -11,7 +11,7 @@ export interface Product {
   image_front_url?: string;
   nutriscore_grade?: string;
   ecoscore_grade?: string;
-  nova_group?: string;
+  nova_group?: number;
   categories?: string;
   ingredients_text?: string;
   ingredients_text_sv?: string;
