@@ -1,6 +1,6 @@
 import { Product } from "@/components/ProductCard";
 
-const BASE_URL = "https://world.openfoodfacts.org/api/v3";
+const BASE_URL = "https://world.openfoodfacts.org/api/v0";
 
 // List of popular Swedish food product categories
 const SWEDISH_CATEGORIES = [
@@ -117,32 +117,224 @@ export class OpenFoodFactsService {
    * Search by Swedish category
    */
   private static async searchBySwedishCategory(): Promise<Product | null> {
-    // Since CORS blocks browser requests to OpenFoodFacts, use fallback data
-    return this.getFallbackSwedishProduct();
+    try {
+      const category = SWEDISH_CATEGORIES[Math.floor(Math.random() * SWEDISH_CATEGORIES.length)];
+      const searchParams = new URLSearchParams({
+        search_terms: category,
+        search_simple: "1",
+        action: "process",
+        json: "1",
+        page_size: "10",
+        countries: "Sweden"
+      });
+
+      console.log(`🔍 Searching OFF API for category: ${category}`);
+      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`📊 OFF API category response:`, data);
+
+      if (data && data.products && data.products.length > 0) {
+        const validProducts = data.products.filter((product: any) => 
+          product.product_name && (product.image_front_url || product.image_url)
+        );
+        
+        if (validProducts.length > 0) {
+          const randomProduct = validProducts[Math.floor(Math.random() * validProducts.length)];
+          console.log(`✅ Found real OFF product: ${randomProduct.product_name}`);
+          return this.normalizeProduct(randomProduct);
+        }
+      }
+      
+      throw new Error("No valid products found");
+    } catch (error) {
+      console.warn("Category search failed, trying fallback:", error);
+      throw error;
+    }
   }
 
   /**
    * Search by Swedish brand
    */
   private static async searchBySwedishBrand(): Promise<Product | null> {
-    // Since CORS blocks browser requests to OpenFoodFacts, use fallback data
-    return this.getFallbackSwedishProduct();
+    try {
+      const brand = SWEDISH_BRANDS[Math.floor(Math.random() * SWEDISH_BRANDS.length)];
+      const searchParams = new URLSearchParams({
+        search_terms: brand,
+        search_simple: "1",
+        action: "process",
+        json: "1",
+        page_size: "10"
+      });
+
+      console.log(`🔍 Searching OFF API for brand: ${brand}`);
+      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`📊 OFF API brand response:`, data);
+
+      if (data && data.products && data.products.length > 0) {
+        const validProducts = data.products.filter((product: any) => 
+          product.product_name && (product.image_front_url || product.image_url)
+        );
+        
+        if (validProducts.length > 0) {
+          const randomProduct = validProducts[Math.floor(Math.random() * validProducts.length)];
+          console.log(`✅ Found real OFF product: ${randomProduct.product_name}`);
+          return this.normalizeProduct(randomProduct);
+        }
+      }
+      
+      throw new Error("No valid products found");
+    } catch (error) {
+      console.warn("Brand search failed, trying fallback:", error);
+      throw error;
+    }
   }
 
   /**
    * Search by country (Sweden)
    */
   private static async searchByCountry(): Promise<Product | null> {
-    // Since CORS blocks browser requests to OpenFoodFacts, use fallback data
-    return this.getFallbackSwedishProduct();
+    try {
+      const searchParams = new URLSearchParams({
+        search_terms: "",
+        search_simple: "1",
+        action: "process",
+        json: "1",
+        page_size: "20",
+        countries: "Sweden"
+      });
+
+      console.log(`🔍 Searching OFF API for Swedish products`);
+      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`📊 OFF API country response:`, data);
+
+      if (data && data.products && data.products.length > 0) {
+        const validProducts = data.products.filter((product: any) => 
+          product.product_name && (product.image_front_url || product.image_url)
+        );
+        
+        if (validProducts.length > 0) {
+          const randomProduct = validProducts[Math.floor(Math.random() * validProducts.length)];
+          console.log(`✅ Found real OFF product: ${randomProduct.product_name}`);
+          return this.normalizeProduct(randomProduct);
+        }
+      }
+      
+      throw new Error("No valid products found");
+    } catch (error) {
+      console.warn("Country search failed, trying fallback:", error);
+      throw error;
+    }
   }
 
   /**
    * General search without country filter
    */
   private static async searchGeneral(): Promise<Product | null> {
-    // Since CORS blocks browser requests to OpenFoodFacts, use fallback data
-    return this.getFallbackSwedishProduct();
+    try {
+      const searchTerms = ["mjölk", "bröd", "ost", "smör", "kaffe", "te", "kött", "fisk"];
+      const term = searchTerms[Math.floor(Math.random() * searchTerms.length)];
+      
+      const searchParams = new URLSearchParams({
+        search_terms: term,
+        search_simple: "1",
+        action: "process",
+        json: "1",
+        page_size: "20"
+      });
+
+      console.log(`🔍 Searching OFF API for general term: ${term}`);
+      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`📊 OFF API general response:`, data);
+
+      if (data && data.products && data.products.length > 0) {
+        const validProducts = data.products.filter((product: any) => 
+          product.product_name && (product.image_front_url || product.image_url)
+        );
+        
+        if (validProducts.length > 0) {
+          const randomProduct = validProducts[Math.floor(Math.random() * validProducts.length)];
+          console.log(`✅ Found real OFF product: ${randomProduct.product_name}`);
+          return this.normalizeProduct(randomProduct);
+        }
+      }
+      
+      throw new Error("No valid products found");
+    } catch (error) {
+      console.warn("General search failed, trying fallback:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Normalize product data from OFF API
+   */
+  private static normalizeProduct(product: any): Product {
+    return {
+      id: product.id || product.code || product._id,
+      product_name: product.product_name || product.product_name_en,
+      product_name_sv: product.product_name_sv || product.product_name,
+      brands: product.brands,
+      image_front_url: product.image_front_url || product.image_url,
+      nutriscore_grade: product.nutriscore_grade,
+      nova_group: product.nova_group,
+      categories: product.categories,
+      ingredients_text_sv: product.ingredients_text_sv || product.ingredients_text,
+      energy_100g: product.nutriments?.energy_100g || product.nutriments?.["energy-kcal_100g"],
+      fat_100g: product.nutriments?.fat_100g,
+      saturated_fat_100g: product.nutriments?.["saturated-fat_100g"],
+      sugars_100g: product.nutriments?.sugars_100g,
+      salt_100g: product.nutriments?.salt_100g,
+      fiber_100g: product.nutriments?.fiber_100g,
+      proteins_100g: product.nutriments?.proteins_100g,
+      countries: product.countries || "Sverige"
+    };
   }
 
   /**
