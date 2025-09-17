@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ProductCard, Product } from "@/components/ProductCard";
 import { ProductHistory } from "@/components/ProductHistory";
+import { ManualEanInput } from "@/components/ManualEanInput";
 import { OpenFoodFactsService } from "@/services/openFoodFactsService";
 import { Loader2, Sparkles, ShoppingCart } from "lucide-react";
 
@@ -11,6 +12,16 @@ const Index = () => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productHistory, setProductHistory] = useState<Product[]>([]);
+
+  const handleProductFound = (product: Product) => {
+    setCurrentProduct(product);
+    
+    // Add to history if not already present
+    const isAlreadyInHistory = productHistory.some(p => p.id === product.id);
+    if (!isAlreadyInHistory) {
+      setProductHistory(prev => [product, ...prev]);
+    }
+  };
 
   const handleDiscoverProduct = async () => {
     setIsLoading(true);
@@ -74,6 +85,9 @@ const Index = () => {
           
           {/* Product Discovery Section */}
           <div className="flex-1 space-y-6">
+            {/* Manual EAN Input */}
+            <ManualEanInput onProductFound={handleProductFound} />
+
             {/* Discover Button */}
             <div className="text-center">
               <Button
