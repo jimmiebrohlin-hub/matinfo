@@ -1,6 +1,6 @@
 import { Product } from "@/components/ProductCard";
 
-const BASE_URL = "https://world.openfoodfacts.org/api/v0";
+const BASE_URL = "https://world.openfoodfacts.org";
 
 // List of popular Swedish food product categories
 const SWEDISH_CATEGORIES = [
@@ -40,14 +40,14 @@ export class OpenFoodFactsService {
   static async searchSwedishProducts(page: number = 1, pageSize: number = 24): Promise<Product[]> {
     try {
       const searchParams = new URLSearchParams({
-        countries_tags: "en:sweden",
+        countries_tags_en: "sweden",
         page_size: pageSize.toString(),
         page: page.toString(),
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments"
       });
 
       console.log(`🔍 Searching Swedish products...`);
-      const response = await fetch(`${BASE_URL}/search?${searchParams}`, {
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -82,21 +82,22 @@ export class OpenFoodFactsService {
     try {
       console.log("🔍 Fetching random Swedish product from OFF...");
       
-      // Use the correct OFF search API with Swedish terms
-      const searchTerms = ["mjölk", "bröd", "kaffe", "ost", "smör", "kött", "pasta", "ris", "fisk"];
-      const randomTerm = searchTerms[Math.floor(Math.random() * searchTerms.length)];
+      // Use popular Swedish food categories for better results
+      const categories = [
+        "dairy", "bread", "meat", "fish", "cheese", "coffee", 
+        "pasta", "cereals", "beverages", "chocolate", "cookies"
+      ];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
       const searchParams = new URLSearchParams({
-        search_terms: randomTerm,
-        search_simple: "1",
-        action: "process",
-        json: "1",
+        categories_tags_en: randomCategory,
+        countries_tags_en: "sweden",
         page_size: "50",
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments"
       });
 
-      console.log(`🔍 Searching for products with term: ${randomTerm}`);
-      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
+      console.log(`🔍 Searching for products in category: ${randomCategory}`);
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -169,7 +170,7 @@ export class OpenFoodFactsService {
    */
   static async getProductByBarcode(barcode: string): Promise<Product | null> {
     try {
-      const response = await fetch(`${BASE_URL}/product/${barcode}.json`);
+      const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments`);
       const data = await response.json();
 
       if (data && data.product && data.status === 1) {
