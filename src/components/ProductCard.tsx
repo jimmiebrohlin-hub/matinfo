@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { calculateProductSmartPoints } from "@/utils/smartPointsCalculator";
 
 export interface Product {
   id: string;
@@ -67,6 +68,14 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   const displayName = product.product_name_sv || product.product_name || "Okänd produkt";
   const imageUrl = product.image_front_url || product.image_url;
   const categories = product.categories?.split(',').slice(0, 3) || [];
+  
+  // Calculate SmartPoints
+  const smartPoints = calculateProductSmartPoints(
+    product.energy_100g,
+    product.saturated_fat_100g,
+    product.sugars_100g,
+    product.proteins_100g
+  );
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
@@ -144,6 +153,22 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               )}
             </div>
 
+            {/* SmartPoints */}
+            {smartPoints && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2 text-foreground">WW SmartPoints</h4>
+                  <div className="flex items-center gap-4">
+                    <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                      <span className="font-bold text-lg">{smartPoints.per100g}</span>
+                      <span className="text-xs ml-1">per 100g</span>
+                    </Badge>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Nutrition Facts */}
             {(product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) && (
               <>
@@ -154,13 +179,19 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                     {product.energy_100g && (
                       <div className="flex justify-between">
                         <span>Energi:</span>
-                        <span className="font-medium">{Math.round(product.energy_100g)} kJ</span>
+                        <span className="font-medium">{Math.round(product.energy_100g)} kJ ({Math.round(product.energy_100g / 4.184)} kcal)</span>
                       </div>
                     )}
                     {product.fat_100g && (
                       <div className="flex justify-between">
                         <span>Fett:</span>
                         <span className="font-medium">{product.fat_100g}g</span>
+                      </div>
+                    )}
+                    {product.saturated_fat_100g && (
+                      <div className="flex justify-between">
+                        <span>- varav mättat:</span>
+                        <span className="font-medium">{product.saturated_fat_100g}g</span>
                       </div>
                     )}
                     {product.sugars_100g && (
