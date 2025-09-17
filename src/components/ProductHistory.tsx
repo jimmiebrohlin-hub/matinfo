@@ -1,13 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { Product } from "./ProductCard";
+import { exportProductsToCSV } from "@/utils/csvExport";
 
 interface ProductHistoryProps {
   products: Product[];
 }
 
 export const ProductHistory = ({ products }: ProductHistoryProps) => {
+  const handleExportCSV = () => {
+    exportProductsToCSV(products);
+  };
+
   if (products.length === 0) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">
@@ -26,12 +33,25 @@ export const ProductHistory = ({ products }: ProductHistoryProps) => {
   return (
     <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-lg text-foreground flex items-center justify-between">
-          Upptäckta Produkter
-          <Badge variant="secondary" className="bg-warm-orange text-white">
-            {products.length}
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg text-foreground">
+            Upptäckta Produkter
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-warm-orange text-white">
+              {products.length}
+            </Badge>
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 h-7 text-xs"
+            >
+              <Download className="h-3 w-3" />
+              CSV
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-96 w-full">
