@@ -159,11 +159,23 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 <Separator />
                 <div>
                   <h4 className="font-semibold mb-2 text-foreground">WW SmartPoints</h4>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
                       <span className="font-bold text-lg">{smartPoints.per100g}</span>
                       <span className="text-xs ml-1">per 100g</span>
                     </Badge>
+                    {smartPoints.perPortion && (
+                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                        <span className="font-bold text-lg">{smartPoints.perPortion}</span>
+                        <span className="text-xs ml-1">per portion</span>
+                      </Badge>
+                    )}
+                    {smartPoints.perPiece && (
+                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                        <span className="font-bold text-lg">{smartPoints.perPiece}</span>
+                        <span className="text-xs ml-1">per styck</span>
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </>

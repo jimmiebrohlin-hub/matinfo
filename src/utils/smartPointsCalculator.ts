@@ -25,8 +25,8 @@ export function calculateSmartPoints(
   
   const totalPoints = caloriePoints + fatPoints + sugarPoints - proteinDeduction;
   
-  // Minimum is 0 points
-  return Math.max(0, Math.round(totalPoints * 10) / 10);
+  // Minimum is 0 points, always return whole numbers
+  return Math.max(0, Math.round(totalPoints));
 }
 
 export function calculateProductSmartPoints(

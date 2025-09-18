@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Camera, Upload } from "lucide-react";
-import BarcodeScannerComponent from "react-qr-barcode-scanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 interface BarcodeScannerProps {
   onBarcodeDetected: (barcode: string) => void;
@@ -13,18 +13,67 @@ interface BarcodeScannerProps {
 export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"camera" | "upload">("camera");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
+
+  useEffect(() => {
+    if (!codeReader.current) {
+      codeReader.current = new BrowserMultiFormatReader();
+    }
+    
+    return () => {
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    };
+  }, []);
+
+  const startCamera = async () => {
+    if (!videoRef.current || !codeReader.current) return;
+
+    try {
+      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
+      if (result) {
+        handleBarcodeDetected(result.getText());
+      }
+    } catch (err) {
+      console.error('Error scanning barcode:', err);
+    }
+  };
 
   const handleBarcodeDetected = (result: string) => {
     onBarcodeDetected(result);
     setIsOpen(false);
+    if (codeReader.current) {
+      codeReader.current.reset();
+    }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // For image upload, we would need a different library or service
-      // For now, we'll just show a message that this feature is coming soon
-      alert("Bilduppladdning för streckkodsskanning kommer snart!");
+    if (file && codeReader.current) {
+      try {
+        const result = await codeReader.current.decodeFromImageUrl(URL.createObjectURL(file));
+        if (result) {
+          handleBarcodeDetected(result.getText());
+        } else {
+          alert("Ingen EAN-kod hittades i bilden");
+        }
+      } catch (err) {
+        console.error('Error reading barcode from image:', err);
+        alert("Kunde inte läsa EAN-kod från bilden");
+      }
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && codeReader.current) {
+      codeReader.current.reset();
+    }
+    if (open && activeTab === "camera") {
+      setTimeout(startCamera, 100);
     }
   };
 
@@ -39,7 +88,7 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
         Skanna Streckkod
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Skanna Streckkod</DialogTitle>
@@ -49,7 +98,10 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
             <Button
               variant={activeTab === "camera" ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveTab("camera")}
+              onClick={() => {
+                setActiveTab("camera");
+                if (isOpen) setTimeout(startCamera, 100);
+              }}
               className="flex-1"
             >
               <Camera className="h-4 w-4 mr-1" />
@@ -69,18 +121,16 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
           {activeTab === "camera" && (
             <div className="space-y-4">
               <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                <BarcodeScannerComponent
-                  width="100%"
-                  height="100%"
-                  onUpdate={(err, result) => {
-                    if (result) {
-                      handleBarcodeDetected(result.getText());
-                    }
-                  }}
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  playsInline
+                  muted
                 />
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                Håll streckkoden framför kameran
+                Håll EAN-koden framför kameran
               </p>
             </div>
           )}
@@ -88,7 +138,7 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
           {activeTab === "upload" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="barcode-image">Välj bild med streckkod</Label>
+                <Label htmlFor="barcode-image">Välj bild med EAN-kod</Label>
                 <Input
                   id="barcode-image"
                   type="file"
@@ -97,7 +147,7 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
                 />
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                Välj en bild som innehåller en streckkod
+                Välj en bild som innehåller en EAN-kod
               </p>
             </div>
           )}
