@@ -143,6 +143,8 @@ export class OpenFoodFactsService {
    * Normalize product data from OFF API
    */
   private static normalizeProduct(product: any): Product {
+    const nutriments = product.nutriments || {};
+    
     return {
       id: product.code || product.id || product._id,
       product_name: product.product_name || product.product_name_en || "Okänd produkt",
@@ -150,17 +152,23 @@ export class OpenFoodFactsService {
       brands: product.brands,
       image_front_url: product.image_front_url || product.image_url,
       nutriscore_grade: product.nutriscore_grade,
+      ecoscore_grade: product.ecoscore_grade,
       nova_group: product.nova_group,
       categories: product.categories,
+      ingredients_text: product.ingredients_text,
       ingredients_text_sv: product.ingredients_text_sv || product.ingredients_text,
-      energy_100g: product.nutriments?.energy_100g || product.nutriments?.["energy-kcal_100g"] || product.nutriments?.energy,
-      fat_100g: product.nutriments?.fat_100g || product.nutriments?.fat,
-      saturated_fat_100g: product.nutriments?.["saturated-fat_100g"] || product.nutriments?.["saturated_fat"],
-      sugars_100g: product.nutriments?.sugars_100g || product.nutriments?.sugars,
-      salt_100g: product.nutriments?.salt_100g || product.nutriments?.salt,
-      fiber_100g: product.nutriments?.fiber_100g || product.nutriments?.fiber,
-      proteins_100g: product.nutriments?.proteins_100g || product.nutriments?.proteins,
-      countries: product.countries || "Unknown"
+      energy_100g: nutriments.energy_100g || nutriments["energy-kcal_100g"] || nutriments.energy,
+      fat_100g: nutriments.fat_100g || nutriments.fat,
+      saturated_fat_100g: nutriments["saturated-fat_100g"] || nutriments.saturated_fat_100g || nutriments["saturated_fat"],
+      sugars_100g: nutriments.sugars_100g || nutriments.sugars,
+      salt_100g: nutriments.salt_100g || nutriments.salt,
+      fiber_100g: nutriments.fiber_100g || nutriments.fiber,
+      proteins_100g: nutriments.proteins_100g || nutriments.proteins,
+      countries: product.countries || "Unknown",
+      // Extract package information from nutriments
+      package_weight: product.quantity ? parseFloat(product.quantity.replace(/[^\d.]/g, '')) : undefined,
+      serving_size: nutriments.serving_size || (product.serving_size ? parseFloat(product.serving_size.replace(/[^\d.]/g, '')) : undefined),
+      pieces_per_package: product.serving_quantity ? parseInt(product.serving_quantity) : undefined
     };
   }
 

@@ -13,7 +13,7 @@ interface ManualEanInputProps {
 }
 
 export const ManualEanInput = ({ onProductFound }: ManualEanInputProps) => {
-  const [ean, setEan] = useState("");
+  const [ean, setEan] = useState("7315360061503");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async () => {

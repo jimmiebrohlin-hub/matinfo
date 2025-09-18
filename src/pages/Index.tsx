@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ProductCard, Product } from "@/components/ProductCard";
@@ -12,6 +12,26 @@ const Index = () => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productHistory, setProductHistory] = useState<Product[]>([]);
+
+  // Load example product on app start
+  useEffect(() => {
+    const loadExampleProduct = async () => {
+      setIsLoading(true);
+      try {
+        const product = await OpenFoodFactsService.getProductByBarcode("7315360061503");
+        if (product) {
+          setCurrentProduct(product);
+          setProductHistory([product]);
+        }
+      } catch (error) {
+        console.error("Error loading example product:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadExampleProduct();
+  }, []);
 
   const handleProductFound = (product: Product) => {
     setCurrentProduct(product);

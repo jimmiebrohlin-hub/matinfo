@@ -16,6 +16,7 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     if (!codeReader.current) {
@@ -30,21 +31,29 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
   }, []);
 
   const startCamera = async () => {
-    if (!videoRef.current || !codeReader.current) return;
+    if (!videoRef.current || !codeReader.current || isScanning) return;
 
     try {
-      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
-      if (result) {
-        handleBarcodeDetected(result.getText());
-      }
+      setIsScanning(true);
+      // Use continuous scanning for better detection
+      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+        if (result) {
+          handleBarcodeDetected(result.getText());
+        }
+        if (error && !(error.name === 'NotFoundException')) {
+          console.error('Error scanning barcode:', error);
+        }
+      });
     } catch (err) {
-      console.error('Error scanning barcode:', err);
+      console.error('Error starting camera:', err);
+      setIsScanning(false);
     }
   };
 
   const handleBarcodeDetected = (result: string) => {
     onBarcodeDetected(result);
     setIsOpen(false);
+    setIsScanning(false);
     if (codeReader.current) {
       codeReader.current.reset();
     }
@@ -69,11 +78,16 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open && codeReader.current) {
-      codeReader.current.reset();
+    if (!open) {
+      setIsScanning(false);
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
     }
-    if (open && activeTab === "camera") {
-      setTimeout(startCamera, 100);
+    if (open) {
+      // Always start with camera mode and begin scanning immediately
+      setActiveTab("camera");
+      setTimeout(startCamera, 200);
     }
   };
 
