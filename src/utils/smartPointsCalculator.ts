@@ -1,6 +1,7 @@
 export interface SmartPointsCalculation {
   per100g: number;
-  perPortion?: number;
+  perPackage?: number;
+  perServing?: number;
   perPiece?: number;
 }
 
@@ -34,9 +35,9 @@ export function calculateProductSmartPoints(
   saturatedFat100g?: number,
   sugars100g?: number,
   proteins100g?: number,
-  portionSize?: number,
-  piecesPerPack?: number,
-  packWeight?: number
+  servingSize?: number,
+  packageWeight?: number,
+  piecesPerPack?: number
 ): SmartPointsCalculation | null {
   // Need at least calories to calculate
   if (!energy100g) return null;
@@ -51,20 +52,31 @@ export function calculateProductSmartPoints(
     proteins100g || 0
   );
   
-  let perPortion: number | undefined;
-  if (portionSize) {
-    const portionMultiplier = portionSize / 100;
-    perPortion = calculateSmartPoints(
-      calories100g * portionMultiplier,
-      (saturatedFat100g || 0) * portionMultiplier,
-      (sugars100g || 0) * portionMultiplier,
-      (proteins100g || 0) * portionMultiplier
+  let perPackage: number | undefined;
+  if (packageWeight) {
+    const packageMultiplier = packageWeight / 100;
+    perPackage = calculateSmartPoints(
+      calories100g * packageMultiplier,
+      (saturatedFat100g || 0) * packageMultiplier,
+      (sugars100g || 0) * packageMultiplier,
+      (proteins100g || 0) * packageMultiplier
+    );
+  }
+  
+  let perServing: number | undefined;
+  if (servingSize) {
+    const servingMultiplier = servingSize / 100;
+    perServing = calculateSmartPoints(
+      calories100g * servingMultiplier,
+      (saturatedFat100g || 0) * servingMultiplier,
+      (sugars100g || 0) * servingMultiplier,
+      (proteins100g || 0) * servingMultiplier
     );
   }
   
   let perPiece: number | undefined;
-  if (piecesPerPack && packWeight) {
-    const pieceWeight = packWeight / piecesPerPack;
+  if (piecesPerPack && packageWeight) {
+    const pieceWeight = packageWeight / piecesPerPack;
     const pieceMultiplier = pieceWeight / 100;
     perPiece = calculateSmartPoints(
       calories100g * pieceMultiplier,
@@ -76,7 +88,8 @@ export function calculateProductSmartPoints(
   
   return {
     per100g,
-    perPortion,
+    perPackage,
+    perServing,
     perPiece
   };
 }

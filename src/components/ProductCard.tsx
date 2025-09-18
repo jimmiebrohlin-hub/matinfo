@@ -164,9 +164,15 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                       <span className="font-bold text-lg">{smartPoints.per100g}</span>
                       <span className="text-xs ml-1">per 100g</span>
                     </Badge>
-                    {smartPoints.perPortion && (
+                    {smartPoints.perPackage && (
                       <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                        <span className="font-bold text-lg">{smartPoints.perPortion}</span>
+                        <span className="font-bold text-lg">{smartPoints.perPackage}</span>
+                        <span className="text-xs ml-1">per förpackning</span>
+                      </Badge>
+                    )}
+                    {smartPoints.perServing && (
+                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                        <span className="font-bold text-lg">{smartPoints.perServing}</span>
                         <span className="text-xs ml-1">per portion</span>
                       </Badge>
                     )}
