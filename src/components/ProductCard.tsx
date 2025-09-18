@@ -25,6 +25,9 @@ export interface Product {
   fiber_100g?: number;
   proteins_100g?: number;
   countries?: string;
+  package_weight?: number;
+  serving_size?: number;
+  pieces_per_package?: number;
 }
 
 interface ProductCardProps {
@@ -74,7 +77,10 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     product.energy_100g,
     product.saturated_fat_100g,
     product.sugars_100g,
-    product.proteins_100g
+    product.proteins_100g,
+    product.serving_size,
+    product.package_weight,
+    product.pieces_per_package
   );
 
   return (
@@ -152,6 +158,36 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 </div>
               )}
             </div>
+
+            {/* Package Information */}
+            {(product.package_weight || product.pieces_per_package || product.serving_size) && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2 text-foreground">Förpackningsinformation</h4>
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    {product.package_weight && (
+                      <div className="flex justify-between">
+                        <span>Förpackningsvikt:</span>
+                        <span className="font-medium">{product.package_weight}g</span>
+                      </div>
+                    )}
+                    {product.serving_size && (
+                      <div className="flex justify-between">
+                        <span>Portionsstorlek:</span>
+                        <span className="font-medium">{product.serving_size}g</span>
+                      </div>
+                    )}
+                    {product.pieces_per_package && (
+                      <div className="flex justify-between">
+                        <span>Antal per förpackning:</span>
+                        <span className="font-medium">{product.pieces_per_package} st</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* SmartPoints */}
             {smartPoints && (
