@@ -195,28 +195,47 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 <Separator />
                 <div>
                   <h4 className="font-semibold mb-2 text-foreground">WW SmartPoints</h4>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                      <span className="font-bold text-lg">{smartPoints.per100g}</span>
-                      <span className="text-xs ml-1">per 100g</span>
-                    </Badge>
-                    {smartPoints.perPackage && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Per 100g */}
+                    <div className="flex flex-col gap-1">
                       <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                        <span className="font-bold text-lg">{smartPoints.perPackage}</span>
-                        <span className="text-xs ml-1">per förpackning</span>
+                        <span className="font-bold text-lg">{smartPoints.per100g}</span>
+                        <span className="text-xs ml-1">WW SP per 100g</span>
                       </Badge>
+                      <span className="text-xs text-warm-neutral ml-1">Vikt: 100g</span>
+                    </div>
+
+                    {/* Per Serving */}
+                    {smartPoints.perServing && product.serving_size && (
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                          <span className="font-bold text-lg">{smartPoints.perServing}</span>
+                          <span className="text-xs ml-1">WW SP per portion</span>
+                        </Badge>
+                        <span className="text-xs text-warm-neutral ml-1">Vikt: {product.serving_size}g</span>
+                      </div>
                     )}
-                    {smartPoints.perServing && (
-                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                        <span className="font-bold text-lg">{smartPoints.perServing}</span>
-                        <span className="text-xs ml-1">per portion</span>
-                      </Badge>
+
+                    {/* Per Package */}
+                    {smartPoints.perPackage && product.package_weight && (
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                          <span className="font-bold text-lg">{smartPoints.perPackage}</span>
+                          <span className="text-xs ml-1">WW SP per förpackning</span>
+                        </Badge>
+                        <span className="text-xs text-warm-neutral ml-1">Vikt: {product.package_weight}g</span>
+                      </div>
                     )}
-                    {smartPoints.perPiece && (
-                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                        <span className="font-bold text-lg">{smartPoints.perPiece}</span>
-                        <span className="text-xs ml-1">per styck</span>
-                      </Badge>
+
+                    {/* Per Piece */}
+                    {smartPoints.perPiece && product.pieces_per_package && product.package_weight && (
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                          <span className="font-bold text-lg">{smartPoints.perPiece}</span>
+                          <span className="text-xs ml-1">WW SP per styck</span>
+                        </Badge>
+                        <span className="text-xs text-warm-neutral ml-1">Vikt: {Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</span>
+                      </div>
                     )}
                   </div>
                 </div>
