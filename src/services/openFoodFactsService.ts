@@ -145,6 +145,47 @@ export class OpenFoodFactsService {
   private static normalizeProduct(product: any): Product {
     const nutriments = product.nutriments || {};
     
+    // Try to extract serving size from nutrition data ratio
+    let serving_size = undefined;
+    if (nutriments.serving_size) {
+      serving_size = parseFloat(nutriments.serving_size.toString().replace(/[^\d.]/g, ''));
+    } else if (product.serving_size) {
+      serving_size = parseFloat(product.serving_size.replace(/[^\d.]/g, ''));
+    } else if (nutriments.energy_serving && nutriments.energy_100g) {
+      // Calculate serving size from energy ratio
+      const ratio = nutriments.energy_serving / nutriments.energy_100g;
+      serving_size = Math.round(ratio * 100);
+    } else if (nutriments["energy-kcal_serving"] && nutriments["energy-kcal_100g"]) {
+      // Alternative energy calculation
+      const ratio = nutriments["energy-kcal_serving"] / nutriments["energy-kcal_100g"];
+      serving_size = Math.round(ratio * 100);
+    }
+
+    // Extract package weight from various possible fields
+    let package_weight = undefined;
+    if (product.quantity) {
+      const weightMatch = product.quantity.match(/(\d+(?:\.\d+)?)\s*g/i);
+      if (weightMatch) {
+        package_weight = parseFloat(weightMatch[1]);
+      }
+    } else if (product.net_weight_value && product.net_weight_unit === 'g') {
+      package_weight = parseFloat(product.net_weight_value);
+    } else if (nutriments.package_weight) {
+      package_weight = parseFloat(nutriments.package_weight);
+    }
+
+    // Extract pieces per package
+    let pieces_per_package = undefined;
+    if (product.serving_quantity) {
+      pieces_per_package = parseInt(product.serving_quantity);
+    } else if (product.quantity) {
+      // Look for patterns like "6 x 25g" or "12 pieces"
+      const piecesMatch = product.quantity.match(/(\d+)\s*(?:x|pieces|st|styck)/i);
+      if (piecesMatch) {
+        pieces_per_package = parseInt(piecesMatch[1]);
+      }
+    }
+    
     return {
       id: product.code || product.id || product._id,
       product_name: product.product_name || product.product_name_en || "Okänd produkt",
@@ -165,10 +206,9 @@ export class OpenFoodFactsService {
       fiber_100g: nutriments.fiber_100g || nutriments.fiber,
       proteins_100g: nutriments.proteins_100g || nutriments.proteins,
       countries: product.countries || "Unknown",
-      // Extract package information from nutriments
-      package_weight: product.quantity ? parseFloat(product.quantity.replace(/[^\d.]/g, '')) : undefined,
-      serving_size: nutriments.serving_size || (product.serving_size ? parseFloat(product.serving_size.replace(/[^\d.]/g, '')) : undefined),
-      pieces_per_package: product.serving_quantity ? parseInt(product.serving_quantity) : undefined
+      package_weight,
+      serving_size,
+      pieces_per_package
     };
   }
 
@@ -178,7 +218,7 @@ export class OpenFoodFactsService {
    */
   static async getProductByBarcode(barcode: string): Promise<Product | null> {
     try {
-      const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments`);
+      const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging`);
       const data = await response.json();
 
       if (data && data.product && data.status === 1) {
