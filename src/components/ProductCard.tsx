@@ -131,31 +131,49 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
             )}
 
             {/* Weight Information */}
-            {(product.package_weight || product.serving_size || (product.pieces_per_package && product.package_weight)) && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="font-semibold mb-3 text-foreground">Viktinformation</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {product.package_weight && (
-                    <div className="text-center p-3 bg-background/50 rounded-lg border">
-                      <div className="text-2xl font-bold text-foreground">{product.package_weight}g</div>
-                      <div className="text-sm text-warm-neutral">per förpackning</div>
-                    </div>
-                  )}
-                  {product.serving_size && (
-                    <div className="text-center p-3 bg-background/50 rounded-lg border">
-                      <div className="text-2xl font-bold text-foreground">{product.serving_size}g</div>
-                      <div className="text-sm text-warm-neutral">per portion</div>
-                    </div>
-                  )}
-                  {product.pieces_per_package && product.package_weight && (
-                    <div className="text-center p-3 bg-background/50 rounded-lg border">
-                      <div className="text-2xl font-bold text-foreground">{Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</div>
-                      <div className="text-sm text-warm-neutral">per styck</div>
-                    </div>
-                  )}
-                </div>
+            <div className="bg-accent/10 rounded-lg p-4 border border-accent/20">
+              <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
+                <span className="w-2 h-2 bg-accent rounded-full"></span>
+                Viktinformation
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {product.package_weight ? (
+                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div className="text-2xl font-bold text-accent">{product.package_weight}g</div>
+                    <div className="text-sm text-muted-foreground">per förpackning</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="text-lg text-muted-foreground">-</div>
+                    <div className="text-sm text-muted-foreground">per förpackning</div>
+                  </div>
+                )}
+                
+                {product.serving_size ? (
+                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div className="text-2xl font-bold text-accent">{product.serving_size}g</div>
+                    <div className="text-sm text-muted-foreground">per portion</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="text-lg text-muted-foreground">-</div>
+                    <div className="text-sm text-muted-foreground">per portion</div>
+                  </div>
+                )}
+                
+                {product.pieces_per_package && product.package_weight ? (
+                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div className="text-2xl font-bold text-accent">{Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</div>
+                    <div className="text-sm text-muted-foreground">per styck</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="text-lg text-muted-foreground">-</div>
+                    <div className="text-sm text-muted-foreground">per styck</div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Grades */}
             <div className="flex gap-3">
