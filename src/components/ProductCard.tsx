@@ -130,6 +130,33 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </div>
             )}
 
+            {/* Weight Information */}
+            {(product.package_weight || product.serving_size || (product.pieces_per_package && product.package_weight)) && (
+              <div className="bg-muted/30 rounded-lg p-4">
+                <h4 className="font-semibold mb-3 text-foreground">Viktinformation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {product.package_weight && (
+                    <div className="text-center p-3 bg-background/50 rounded-lg border">
+                      <div className="text-2xl font-bold text-foreground">{product.package_weight}g</div>
+                      <div className="text-sm text-warm-neutral">per förpackning</div>
+                    </div>
+                  )}
+                  {product.serving_size && (
+                    <div className="text-center p-3 bg-background/50 rounded-lg border">
+                      <div className="text-2xl font-bold text-foreground">{product.serving_size}g</div>
+                      <div className="text-sm text-warm-neutral">per portion</div>
+                    </div>
+                  )}
+                  {product.pieces_per_package && product.package_weight && (
+                    <div className="text-center p-3 bg-background/50 rounded-lg border">
+                      <div className="text-2xl font-bold text-foreground">{Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</div>
+                      <div className="text-sm text-warm-neutral">per styck</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Grades */}
             <div className="flex gap-3">
               {product.nutriscore_grade && (
