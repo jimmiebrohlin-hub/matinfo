@@ -205,34 +205,41 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
             </div>
 
             {/* Package Information */}
-            {(product.package_weight || product.pieces_per_package || product.serving_size) && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="font-semibold mb-2 text-foreground">Förpackningsinformation</h4>
-                  <div className="grid grid-cols-1 gap-2 text-sm">
-                    {product.package_weight && (
-                      <div className="flex justify-between">
-                        <span>Förpackningsvikt:</span>
-                        <span className="font-medium">{product.package_weight}g</span>
-                      </div>
-                    )}
-                    {product.serving_size && (
-                      <div className="flex justify-between">
-                        <span>Portionsstorlek:</span>
-                        <span className="font-medium">{product.serving_size}g</span>
-                      </div>
-                    )}
-                    {product.pieces_per_package && (
-                      <div className="flex justify-between">
-                        <span>Antal per förpackning:</span>
-                        <span className="font-medium">{product.pieces_per_package} st</span>
-                      </div>
-                    )}
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-semibold mb-2 text-foreground">Förpackningsinformation</h4>
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Förpackningsvikt:</span>
+                    <span className="font-medium">
+                      {product.package_weight ? `${product.package_weight}g` : 'Ej tillgänglig'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Portionsstorlek:</span>
+                    <span className="font-medium">
+                      {product.serving_size ? `${product.serving_size}g` : 'Ej tillgänglig'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Antal per förpackning:</span>
+                    <span className="font-medium">
+                      {product.pieces_per_package ? `${product.pieces_per_package} st` : 'Ej tillgänglig'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Vikt per styck:</span>
+                    <span className="font-medium">
+                      {product.pieces_per_package && product.package_weight 
+                        ? `${Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g`
+                        : 'Ej tillgänglig'
+                      }
+                    </span>
                   </div>
                 </div>
-              </>
-            )}
+              </div>
+            </>
 
             {/* SmartPoints */}
             {smartPoints && (
