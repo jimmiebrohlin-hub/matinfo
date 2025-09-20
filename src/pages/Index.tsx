@@ -12,34 +12,66 @@ const Index = () => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productHistory, setProductHistory] = useState<Product[]>([]);
+  const [currentEan, setCurrentEan] = useState("7315360061503");
 
-  // Load example product on app start
+  // Always load these 3 products on app start
   useEffect(() => {
-    const loadExampleProduct = async () => {
+    const loadDefaultProducts = async () => {
       setIsLoading(true);
       try {
-        const product = await OpenFoodFactsService.getProductByBarcode("7315360061503");
-        if (product) {
-          setCurrentProduct(product);
-          setProductHistory([product]);
+        const defaultBarcodes = ["7315360061503", "7350035210169", "7310865005168"];
+        const loadedProducts: Product[] = [];
+        
+        // Load the first product and set it as current
+        for (const barcode of defaultBarcodes) {
+          try {
+            const product = await OpenFoodFactsService.getProductByBarcode(barcode);
+            if (product) {
+              loadedProducts.push(product);
+              if (barcode === "7315360061503") {
+                setCurrentProduct(product);
+                setCurrentEan(barcode);
+              }
+            }
+          } catch (error) {
+            console.error(`Error loading product ${barcode}:`, error);
+          }
         }
+        
+        setProductHistory(loadedProducts);
       } catch (error) {
-        console.error("Error loading example product:", error);
+        console.error("Error loading default products:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadExampleProduct();
+    loadDefaultProducts();
   }, []);
 
   const handleProductFound = (product: Product) => {
     setCurrentProduct(product);
+    setCurrentEan(product.id);
     
     // Add to history if not already present
     const isAlreadyInHistory = productHistory.some(p => p.id === product.id);
     if (!isAlreadyInHistory) {
       setProductHistory(prev => [product, ...prev]);
+    }
+  };
+
+  const handleProductClick = async (product: Product) => {
+    setCurrentEan(product.id);
+    setCurrentProduct(product);
+    
+    // Optionally refetch the product for the latest data
+    try {
+      const freshProduct = await OpenFoodFactsService.getProductByBarcode(product.id);
+      if (freshProduct) {
+        setCurrentProduct(freshProduct);
+      }
+    } catch (error) {
+      console.error("Error refreshing product:", error);
     }
   };
 
@@ -50,6 +82,7 @@ const Index = () => {
       
       if (product) {
         setCurrentProduct(product);
+        setCurrentEan(product.id);
         
         // Add to history if not already present
         const isAlreadyInHistory = productHistory.some(p => p.id === product.id);
@@ -107,6 +140,8 @@ const Index = () => {
               onProductFound={handleProductFound} 
               onDiscoverProduct={handleDiscoverProduct}
               isDiscovering={isLoading}
+              eanValue={currentEan}
+              onEanChange={setCurrentEan}
             />
 
             {/* Product Display */}
@@ -127,7 +162,7 @@ const Index = () => {
 
           {/* History Sidebar */}
           <div className="w-full lg:w-80">
-            <ProductHistory products={productHistory} />
+            <ProductHistory products={productHistory} onProductClick={handleProductClick} />
           </div>
         </div>
       </main>

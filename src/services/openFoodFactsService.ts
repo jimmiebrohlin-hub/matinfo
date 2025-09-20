@@ -167,9 +167,17 @@ export class OpenFoodFactsService {
     // Try quantity first (this is usually the most reliable - OFF's main weight field)
     if (product.quantity) {
       const quantityStr = product.quantity.toString();
-      const weightMatch = quantityStr.match(/(\d+(?:\.\d+)?)\s*g/i);
+      // Look for patterns like "85 g", "3 oz (85 g)", "240g", "1.5 kg"
+      const weightMatch = quantityStr.match(/\((\d+(?:\.\d+)?)\s*g\)|(\d+(?:\.\d+)?)\s*g/i);
       if (weightMatch) {
-        package_weight = parseFloat(weightMatch[1]);
+        // Use the value in parentheses if available, otherwise use the direct match
+        package_weight = parseFloat(weightMatch[1] || weightMatch[2]);
+      } else {
+        // Try kg to g conversion
+        const kgMatch = quantityStr.match(/(\d+(?:\.\d+)?)\s*kg/i);
+        if (kgMatch) {
+          package_weight = parseFloat(kgMatch[1]) * 1000;
+        }
       }
     }
     

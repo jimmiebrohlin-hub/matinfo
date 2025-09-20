@@ -12,11 +12,17 @@ interface ManualEanInputProps {
   onProductFound: (product: Product) => void;
   onDiscoverProduct: () => void;
   isDiscovering?: boolean;
+  eanValue?: string;
+  onEanChange?: (ean: string) => void;
 }
 
-export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false }: ManualEanInputProps) => {
-  const [ean, setEan] = useState("7315360061503");
+export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false, eanValue, onEanChange }: ManualEanInputProps) => {
+  const [internalEan, setInternalEan] = useState("7315360061503");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Use controlled or uncontrolled mode
+  const ean = eanValue !== undefined ? eanValue : internalEan;
+  const setEan = onEanChange || setInternalEan;
 
   const handleSearch = async () => {
     if (!ean.trim()) {
@@ -40,7 +46,6 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         console.log(`✅ Found product:`, product);
         onProductFound(product);
         toast.success("Produkt hittad!");
-        setEan("");
       } else {
         console.log(`❌ No product found for EAN: ${cleanEan}`);
         toast.error("Ingen produkt hittad för denna EAN-kod");

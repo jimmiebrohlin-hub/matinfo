@@ -8,9 +8,10 @@ import { exportProductsToCSV } from "@/utils/csvExport";
 
 interface ProductHistoryProps {
   products: Product[];
+  onProductClick?: (product: Product) => void;
 }
 
-export const ProductHistory = ({ products }: ProductHistoryProps) => {
+export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps) => {
   const handleExportCSV = () => {
     exportProductsToCSV(products);
   };
@@ -61,8 +62,9 @@ export const ProductHistory = ({ products }: ProductHistoryProps) => {
               return (
                 <div
                   key={`${product.id}-${index}`}
-                  className="p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors duration-200 animate-fade-in"
+                  className={`p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors duration-200 animate-fade-in ${onProductClick ? 'cursor-pointer' : ''}`}
                   style={{ animationDelay: `${index * 0.1}s` }}
+                  onClick={() => onProductClick?.(product)}
                 >
                   <div className="flex items-start gap-3">
                     {(product.image_front_url || product.image_url) && (
