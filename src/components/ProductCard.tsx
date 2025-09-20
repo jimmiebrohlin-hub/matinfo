@@ -119,92 +119,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
           {/* Product Details */}
           <div className="flex-1 space-y-4">
-            {/* Categories */}
-            {categories.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category, index) => (
-                  <Badge key={index} variant="secondary" className="bg-cream text-warm-neutral">
-                    {category.trim()}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Weight Information */}
-            <div className="bg-accent/10 rounded-lg p-4 border border-accent/20">
-              <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
-                <span className="w-2 h-2 bg-accent rounded-full"></span>
-                Viktinformation
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {product.package_weight ? (
-                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
-                    <div className="text-2xl font-bold text-accent">{product.package_weight}g</div>
-                    <div className="text-sm text-muted-foreground">per förpackning</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="text-lg text-muted-foreground">-</div>
-                    <div className="text-sm text-muted-foreground">per förpackning</div>
-                  </div>
-                )}
-                
-                {product.serving_size ? (
-                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
-                    <div className="text-2xl font-bold text-accent">{product.serving_size}g</div>
-                    <div className="text-sm text-muted-foreground">per portion</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="text-lg text-muted-foreground">-</div>
-                    <div className="text-sm text-muted-foreground">per portion</div>
-                  </div>
-                )}
-                
-                {product.pieces_per_package && product.package_weight ? (
-                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
-                    <div className="text-2xl font-bold text-accent">{Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</div>
-                    <div className="text-sm text-muted-foreground">per styck</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="text-lg text-muted-foreground">-</div>
-                    <div className="text-sm text-muted-foreground">per styck</div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Grades */}
-            <div className="flex gap-3">
-              {product.nutriscore_grade && (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium">Nutri-Score:</span>
-                  <Badge 
-                    variant="outline" 
-                    className={`
-                      ${product.nutriscore_grade === 'a' ? 'bg-fresh-green text-white border-fresh-green' : ''}
-                      ${product.nutriscore_grade === 'b' ? 'bg-warm-yellow text-white border-warm-yellow' : ''}
-                      ${product.nutriscore_grade === 'c' ? 'bg-warm-orange text-white border-warm-orange' : ''}
-                      ${['d', 'e'].includes(product.nutriscore_grade) ? 'bg-destructive text-destructive-foreground border-destructive' : ''}
-                    `}
-                  >
-                    {product.nutriscore_grade.toUpperCase()}
-                  </Badge>
-                </div>
-              )}
-              
-              {product.ecoscore_grade && (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium">Eco-Score:</span>
-                  <Badge variant="outline" className="border-fresh-green text-fresh-green">
-                    {product.ecoscore_grade.toUpperCase()}
-                  </Badge>
-                </div>
-              )}
-            </div>
-
-            {/* Package Information */}
+            {/* 1. Package Information */}
             <>
               <Separator />
               <div>
@@ -241,7 +156,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </div>
             </>
 
-            {/* SmartPoints */}
+            {/* 2. SmartPoints */}
             {smartPoints && (
               <>
                 <Separator />
@@ -294,7 +209,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </>
             )}
 
-            {/* Nutrition Facts */}
+            {/* 3. Nutrition Facts */}
             {(product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) && (
               <>
                 <Separator />
@@ -348,7 +263,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </>
             )}
 
-            {/* Ingredients */}
+            {/* 4. Ingredients */}
             {(product.ingredients_text_sv || product.ingredients_text) && (
               <>
                 <Separator />
@@ -361,9 +276,100 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </>
             )}
 
-            {/* EAN */}
+            {/* 5. EAN */}
             <div className="pt-2 border-t border-border">
               <span className="text-xs text-warm-neutral">EAN: {product.id}</span>
+            </div>
+
+            {/* 6. Categories */}
+            {categories.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2 text-foreground">Kategorier</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category, index) => (
+                      <Badge key={index} variant="secondary" className="bg-cream text-warm-neutral">
+                        {category.trim()}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* 7. Weight Information */}
+            <div className="bg-accent/10 rounded-lg p-4 border border-accent/20">
+              <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
+                <span className="w-2 h-2 bg-accent rounded-full"></span>
+                Viktinformation
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {product.package_weight ? (
+                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div className="text-2xl font-bold text-accent">{product.package_weight}g</div>
+                    <div className="text-sm text-muted-foreground">per förpackning</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="text-lg text-muted-foreground">-</div>
+                    <div className="text-sm text-muted-foreground">per förpackning</div>
+                  </div>
+                )}
+                
+                {product.serving_size ? (
+                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div className="text-2xl font-bold text-accent">{product.serving_size}g</div>
+                    <div className="text-sm text-muted-foreground">per portion</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="text-lg text-muted-foreground">-</div>
+                    <div className="text-sm text-muted-foreground">per portion</div>
+                  </div>
+                )}
+                
+                {product.pieces_per_package && product.package_weight ? (
+                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div className="text-2xl font-bold text-accent">{Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</div>
+                    <div className="text-sm text-muted-foreground">per styck</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="text-lg text-muted-foreground">-</div>
+                    <div className="text-sm text-muted-foreground">per styck</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Grades */}
+              <div className="flex gap-3 mt-4 pt-3 border-t border-border/50">
+                {product.nutriscore_grade && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium">Nutri-Score:</span>
+                    <Badge 
+                      variant="outline" 
+                      className={`
+                        ${product.nutriscore_grade === 'a' ? 'bg-fresh-green text-white border-fresh-green' : ''}
+                        ${product.nutriscore_grade === 'b' ? 'bg-warm-yellow text-white border-warm-yellow' : ''}
+                        ${product.nutriscore_grade === 'c' ? 'bg-warm-orange text-white border-warm-orange' : ''}
+                        ${['d', 'e'].includes(product.nutriscore_grade) ? 'bg-destructive text-destructive-foreground border-destructive' : ''}
+                      `}
+                    >
+                      {product.nutriscore_grade.toUpperCase()}
+                    </Badge>
+                  </div>
+                )}
+                
+                {product.ecoscore_grade && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium">Eco-Score:</span>
+                    <Badge variant="outline" className="border-fresh-green text-fresh-green">
+                      {product.ecoscore_grade.toUpperCase()}
+                    </Badge>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Loader2, Sparkles } from "lucide-react";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { OpenFoodFactsService } from "@/services/openFoodFactsService";
 import { Product } from "./ProductCard";
@@ -10,9 +10,11 @@ import { toast } from "sonner";
 
 interface ManualEanInputProps {
   onProductFound: (product: Product) => void;
+  onDiscoverProduct: () => void;
+  isDiscovering?: boolean;
 }
 
-export const ManualEanInput = ({ onProductFound }: ManualEanInputProps) => {
+export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false }: ManualEanInputProps) => {
   const [ean, setEan] = useState("7315360061503");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -64,12 +66,7 @@ export const ManualEanInput = ({ onProductFound }: ManualEanInputProps) => {
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-lg text-foreground">
-          Sök med EAN-kod
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-4 space-y-4">
         <div className="space-y-2">
           <Input
             type="text"
@@ -102,11 +99,19 @@ export const ManualEanInput = ({ onProductFound }: ManualEanInputProps) => {
           </Button>
           
           <BarcodeScanner onBarcodeDetected={handleBarcodeDetected} />
+          
+          <Button
+            onClick={onDiscoverProduct}
+            disabled={isDiscovering}
+            variant="discover"
+          >
+            {isDiscovering ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-        
-        <p className="text-sm text-muted-foreground text-center">
-          Ange EAN-koden manuellt eller använd kameran för att skanna
-        </p>
       </CardContent>
     </Card>
   );

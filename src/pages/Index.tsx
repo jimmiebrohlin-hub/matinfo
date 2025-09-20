@@ -87,14 +87,11 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-fresh">
       {/* Header */}
       <header className="bg-gradient-card backdrop-blur-sm border-b border-border/20 sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-3">
           <div className="text-center">
-            <h1 className="text-4xl font-bold bg-gradient-warm bg-clip-text text-transparent mb-2">
+            <h1 className="text-2xl font-bold bg-gradient-warm bg-clip-text text-transparent">
               Svenska Matupptäckaren
             </h1>
-            <p className="text-warm-neutral text-lg max-w-2xl mx-auto">
-              Upptäck slumpmässiga svenska livsmedelsprodukter från våra butiker
-            </p>
           </div>
         </div>
       </header>
@@ -106,30 +103,11 @@ const Index = () => {
           {/* Product Discovery Section */}
           <div className="flex-1 space-y-6">
             {/* Manual EAN Input */}
-            <ManualEanInput onProductFound={handleProductFound} />
-
-            {/* Discover Button */}
-            <div className="text-center">
-              <Button
-                onClick={handleDiscoverProduct}
-                disabled={isLoading}
-                variant="discover"
-                size="lg"
-                className="text-lg px-8 py-4 h-auto animate-bounce-in"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" />
-                    Söker produkt...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles />
-                    Upptäck Ny Produkt
-                  </>
-                )}
-              </Button>
-            </div>
+            <ManualEanInput 
+              onProductFound={handleProductFound} 
+              onDiscoverProduct={handleDiscoverProduct}
+              isDiscovering={isLoading}
+            />
 
             {/* Product Display */}
             <ProductCard product={currentProduct} isLoading={isLoading} />

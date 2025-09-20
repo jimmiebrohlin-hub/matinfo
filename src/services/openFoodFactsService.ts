@@ -161,17 +161,37 @@ export class OpenFoodFactsService {
       serving_size = Math.round(ratio * 100);
     }
 
-    // Extract package weight from various possible fields
+    // Extract package weight from various possible fields (improved to prioritize quantity)
     let package_weight = undefined;
+    
+    // Try quantity first (this is usually the most reliable - OFF's main weight field)
     if (product.quantity) {
-      const weightMatch = product.quantity.match(/(\d+(?:\.\d+)?)\s*g/i);
+      const quantityStr = product.quantity.toString();
+      const weightMatch = quantityStr.match(/(\d+(?:\.\d+)?)\s*g/i);
       if (weightMatch) {
         package_weight = parseFloat(weightMatch[1]);
       }
-    } else if (product.net_weight_value && product.net_weight_unit === 'g') {
+    }
+    
+    // Fallback to net_weight_value + unit
+    if (!package_weight && product.net_weight_value && product.net_weight_unit === 'g') {
       package_weight = parseFloat(product.net_weight_value);
-    } else if (nutriments.package_weight) {
-      package_weight = parseFloat(nutriments.package_weight);
+    }
+    
+    // Try product_quantity as another fallback
+    if (!package_weight && product.product_quantity) {
+      const weight = parseFloat(product.product_quantity);
+      if (!isNaN(weight)) {
+        package_weight = weight;
+      }
+    }
+    
+    // Last resort: extract from packaging text
+    if (!package_weight && product.packaging) {
+      const weightMatch = product.packaging.match(/(\d+(?:\.\d+)?)\s*g/i);
+      if (weightMatch) {
+        package_weight = parseFloat(weightMatch[1]);
+      }
     }
 
     // Extract pieces per package
@@ -218,7 +238,7 @@ export class OpenFoodFactsService {
    */
   static async getProductByBarcode(barcode: string): Promise<Product | null> {
     try {
-      const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging`);
+      const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity`);
       const data = await response.json();
 
       if (data && data.product && data.status === 1) {
