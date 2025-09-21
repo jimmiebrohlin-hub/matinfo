@@ -147,10 +147,16 @@ export class OpenFoodFactsService {
     
     // Try to extract serving size from nutrition data ratio
     let serving_size = undefined;
-    if (nutriments.serving_size) {
+    
+    // First check for numeric serving_quantity field (most reliable)
+    if (product.serving_quantity) {
+      serving_size = parseFloat(product.serving_quantity);
+    } else if (nutriments.serving_size) {
       serving_size = parseFloat(nutriments.serving_size.toString().replace(/[^\d.]/g, ''));
     } else if (product.serving_size) {
-      serving_size = parseFloat(product.serving_size.replace(/[^\d.]/g, ''));
+      // Handle Swedish decimal format (comma) and convert to dot
+      const servingSizeStr = product.serving_size.replace(/,/g, '.').replace(/[^\d.]/g, '');
+      serving_size = parseFloat(servingSizeStr);
     } else if (nutriments.energy_serving && nutriments.energy_100g) {
       // Calculate serving size from energy ratio
       const ratio = nutriments.energy_serving / nutriments.energy_100g;
