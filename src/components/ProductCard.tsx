@@ -119,88 +119,54 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
           {/* Product Details */}
           <div className="flex-1 space-y-4">
-            {/* 1. Package Information & SmartPoints */}
+            {/* 1. Package Information & SmartPoints - Compact Layout */}
             <>
               <Separator />
               <div>
-                <h4 className="font-semibold mb-3 text-foreground">Förpackningsinformation & WW SmartPoints</h4>
+                <h4 className="font-semibold mb-3 text-foreground">Förpackning & WW SmartPoints</h4>
                 
-                {/* Package details in compact grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Förpackningsvikt:</span>
-                    <span className="font-medium">
-                      {product.package_weight ? `${product.package_weight}g` : 'Ej tillgänglig'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Portionsstorlek:</span>
-                    <span className="font-medium">
-                      {product.serving_size ? `${product.serving_size}g` : 'Ej tillgänglig'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Antal per förpackning:</span>
-                    <span className="font-medium">
-                      {product.pieces_per_package ? `${product.pieces_per_package} st` : 'Ej tillgänglig'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Vikt per styck:</span>
-                    <span className="font-medium">
-                      {product.pieces_per_package && product.package_weight 
-                        ? `${Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g`
-                        : 'Ej tillgänglig'
-                      }
-                    </span>
-                  </div>
+                {/* Compact package info */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-3 text-xs">
+                  <span><strong>Förpackning:</strong> {product.package_weight ? `${product.package_weight}g` : 'Ej tillgänglig'}</span>
+                  <span><strong>Portion:</strong> {product.serving_size ? `${product.serving_size}g` : 'Ej tillgänglig'}</span>
+                  <span><strong>Antal:</strong> {product.pieces_per_package ? `${product.pieces_per_package} st` : 'Ej tillgänglig'}</span>
+                  <span><strong>Per styck:</strong> {product.pieces_per_package && product.package_weight 
+                    ? `${Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g`
+                    : 'Ej tillgänglig'
+                  }</span>
                 </div>
 
-                {/* SmartPoints */}
+                {/* Compact SmartPoints */}
                 {smartPoints && (
-                  <>
-                    <div className="border-t border-border/50 pt-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Per 100g */}
-                        <div className="flex flex-col gap-1">
-                          <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                            <span className="font-bold text-lg">{smartPoints.per100g}</span>
-                            <span className="text-xs ml-1">WW SP per 100g</span>
-                          </Badge>
-                        </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Per 100g and Per Serving on first row */}
+                    <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30 justify-center">
+                      <span className="font-bold">{smartPoints.per100g}</span>
+                      <span className="text-xs ml-1">SP/100g</span>
+                    </Badge>
 
-                        {/* Per Serving */}
-                        {smartPoints.perServing && product.serving_size && (
-                          <div className="flex flex-col gap-1">
-                            <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                              <span className="font-bold text-lg">{smartPoints.perServing}</span>
-                              <span className="text-xs ml-1">WW SP per portion</span>
-                            </Badge>
-                          </div>
-                        )}
+                    {smartPoints.perServing && product.serving_size && (
+                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30 justify-center">
+                        <span className="font-bold">{smartPoints.perServing}</span>
+                        <span className="text-xs ml-1">SP/portion</span>
+                      </Badge>
+                    )}
 
-                        {/* Per Package */}
-                        {smartPoints.perPackage && product.package_weight && (
-                          <div className="flex flex-col gap-1">
-                            <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                              <span className="font-bold text-lg">{smartPoints.perPackage}</span>
-                              <span className="text-xs ml-1">WW SP per förpackning</span>
-                            </Badge>
-                          </div>
-                        )}
+                    {/* Per Package and Per Piece on second row */}
+                    {smartPoints.perPackage && product.package_weight && (
+                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30 justify-center">
+                        <span className="font-bold">{smartPoints.perPackage}</span>
+                        <span className="text-xs ml-1">SP/förpackning</span>
+                      </Badge>
+                    )}
 
-                        {/* Per Piece */}
-                        {smartPoints.perPiece && product.pieces_per_package && product.package_weight && (
-                          <div className="flex flex-col gap-1">
-                            <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                              <span className="font-bold text-lg">{smartPoints.perPiece}</span>
-                              <span className="text-xs ml-1">WW SP per styck</span>
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
+                    {smartPoints.perPiece && product.pieces_per_package && product.package_weight && (
+                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30 justify-center">
+                        <span className="font-bold">{smartPoints.perPiece}</span>
+                        <span className="text-xs ml-1">SP/styck</span>
+                      </Badge>
+                    )}
+                  </div>
                 )}
               </div>
             </>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, Upload } from "lucide-react";
+import { Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrowserMultiFormatReader } from '@zxing/library';
@@ -12,9 +12,7 @@ interface BarcodeScannerProps {
 
 export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"camera" | "upload">("camera");
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
@@ -84,87 +82,60 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
         codeReader.current.reset();
       }
     }
-    if (open) {
-      // Always start with camera mode and begin scanning immediately
-      setActiveTab("camera");
-      setTimeout(startCamera, 200);
-    }
   };
 
   return (
     <>
       <Button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          // Start camera immediately when dialog opens
+          setTimeout(startCamera, 300);
+        }}
         variant="outline"
         className="flex items-center gap-2"
       >
         <Camera className="h-4 w-4" />
-        Skanna Streckkod
+        Skanna Produkt
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Skanna Streckkod</DialogTitle>
+            <DialogTitle>Skanna Produkt</DialogTitle>
           </DialogHeader>
           
-          <div className="flex gap-2 mb-4">
-            <Button
-              variant={activeTab === "camera" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setActiveTab("camera");
-                if (isOpen) setTimeout(startCamera, 100);
-              }}
-              className="flex-1"
-            >
-              <Camera className="h-4 w-4 mr-1" />
-              Kamera
-            </Button>
-            <Button
-              variant={activeTab === "upload" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("upload")}
-              className="flex-1"
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Ladda upp
-            </Button>
-          </div>
-
-          {activeTab === "camera" && (
-            <div className="space-y-4">
-              <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  playsInline
-                  muted
-                />
-              </div>
-              <p className="text-sm text-muted-foreground text-center">
-                Håll EAN-koden framför kameran
-              </p>
+          {/* Camera view directly without tabs */}
+          <div className="space-y-4">
+            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                playsInline
+                muted
+              />
             </div>
-          )}
-
-          {activeTab === "upload" && (
-            <div className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Håll EAN-koden framför kameran för att skanna
+            </p>
+            
+            {/* Optional file upload as secondary option */}
+            <div className="pt-4 border-t">
               <div className="space-y-2">
-                <Label htmlFor="barcode-image">Välj bild med EAN-kod</Label>
+                <Label htmlFor="barcode-image" className="text-sm text-muted-foreground">
+                  Eller ladda upp bild:
+                </Label>
                 <Input
                   id="barcode-image"
                   type="file"
                   accept="image/*"
                   onChange={handleFileUpload}
+                  className="text-sm"
                 />
               </div>
-              <p className="text-sm text-muted-foreground text-center">
-                Välj en bild som innehåller en EAN-kod
-              </p>
             </div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
