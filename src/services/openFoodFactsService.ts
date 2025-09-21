@@ -202,13 +202,12 @@ export class OpenFoodFactsService {
       }
     }
 
-    // Extract pieces per package
-    let pieces_per_package = undefined;
-    if (product.serving_quantity) {
-      pieces_per_package = parseInt(product.serving_quantity);
-    } else if (product.quantity) {
-      // Look for patterns like "6 x 25g" or "12 pieces"
-      const piecesMatch = product.quantity.match(/(\d+)\s*(?:x|pieces|st|styck)/i);
+    // Extract pieces per package from quantity field
+    let pieces_per_package = 1; // Default to 1 piece per package
+    if (product.quantity) {
+      const quantityStr = product.quantity.toString();
+      // Look for patterns like "6 st", "6 x 40g", "6 pieces", "6 styck"
+      const piecesMatch = quantityStr.match(/(\d+)\s*(?:st|x\s*\d+g?|pieces?|styck)/i);
       if (piecesMatch) {
         pieces_per_package = parseInt(piecesMatch[1]);
       }
