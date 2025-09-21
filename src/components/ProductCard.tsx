@@ -119,12 +119,14 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
           {/* Product Details */}
           <div className="flex-1 space-y-4">
-            {/* 1. Package Information */}
+            {/* 1. Package Information & SmartPoints */}
             <>
               <Separator />
               <div>
-                <h4 className="font-semibold mb-2 text-foreground">Förpackningsinformation</h4>
-                <div className="grid grid-cols-1 gap-2 text-sm">
+                <h4 className="font-semibold mb-3 text-foreground">Förpackningsinformation & WW SmartPoints</h4>
+                
+                {/* Package details in compact grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                   <div className="flex justify-between">
                     <span>Förpackningsvikt:</span>
                     <span className="font-medium">
@@ -153,61 +155,55 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                     </span>
                   </div>
                 </div>
+
+                {/* SmartPoints */}
+                {smartPoints && (
+                  <>
+                    <div className="border-t border-border/50 pt-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Per 100g */}
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                            <span className="font-bold text-lg">{smartPoints.per100g}</span>
+                            <span className="text-xs ml-1">WW SP per 100g</span>
+                          </Badge>
+                        </div>
+
+                        {/* Per Serving */}
+                        {smartPoints.perServing && product.serving_size && (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                              <span className="font-bold text-lg">{smartPoints.perServing}</span>
+                              <span className="text-xs ml-1">WW SP per portion</span>
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Per Package */}
+                        {smartPoints.perPackage && product.package_weight && (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                              <span className="font-bold text-lg">{smartPoints.perPackage}</span>
+                              <span className="text-xs ml-1">WW SP per förpackning</span>
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Per Piece */}
+                        {smartPoints.perPiece && product.pieces_per_package && product.package_weight && (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
+                              <span className="font-bold text-lg">{smartPoints.perPiece}</span>
+                              <span className="text-xs ml-1">WW SP per styck</span>
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </>
-
-            {/* 2. SmartPoints */}
-            {smartPoints && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="font-semibold mb-2 text-foreground">WW SmartPoints</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Per 100g */}
-                    <div className="flex flex-col gap-1">
-                      <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                        <span className="font-bold text-lg">{smartPoints.per100g}</span>
-                        <span className="text-xs ml-1">WW SP per 100g</span>
-                      </Badge>
-                      <span className="text-xs text-warm-neutral ml-1">Vikt: 100g</span>
-                    </div>
-
-                    {/* Per Serving */}
-                    {smartPoints.perServing && product.serving_size && (
-                      <div className="flex flex-col gap-1">
-                        <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                          <span className="font-bold text-lg">{smartPoints.perServing}</span>
-                          <span className="text-xs ml-1">WW SP per portion</span>
-                        </Badge>
-                        <span className="text-xs text-warm-neutral ml-1">Vikt: {product.serving_size}g</span>
-                      </div>
-                    )}
-
-                    {/* Per Package */}
-                    {smartPoints.perPackage && product.package_weight && (
-                      <div className="flex flex-col gap-1">
-                        <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                          <span className="font-bold text-lg">{smartPoints.perPackage}</span>
-                          <span className="text-xs ml-1">WW SP per förpackning</span>
-                        </Badge>
-                        <span className="text-xs text-warm-neutral ml-1">Vikt: {product.package_weight}g</span>
-                      </div>
-                    )}
-
-                    {/* Per Piece */}
-                    {smartPoints.perPiece && product.pieces_per_package && product.package_weight && (
-                      <div className="flex flex-col gap-1">
-                        <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30">
-                          <span className="font-bold text-lg">{smartPoints.perPiece}</span>
-                          <span className="text-xs ml-1">WW SP per styck</span>
-                        </Badge>
-                        <span className="text-xs text-warm-neutral ml-1">Vikt: {Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
 
             {/* 3. Nutrition Facts */}
             {(product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) && (
@@ -298,78 +294,33 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </>
             )}
 
-            {/* 7. Weight Information */}
-            <div className="bg-accent/10 rounded-lg p-4 border border-accent/20">
-              <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
-                <span className="w-2 h-2 bg-accent rounded-full"></span>
-                Viktinformation
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {product.package_weight ? (
-                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
-                    <div className="text-2xl font-bold text-accent">{product.package_weight}g</div>
-                    <div className="text-sm text-muted-foreground">per förpackning</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="text-lg text-muted-foreground">-</div>
-                    <div className="text-sm text-muted-foreground">per förpackning</div>
-                  </div>
-                )}
-                
-                {product.serving_size ? (
-                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
-                    <div className="text-2xl font-bold text-accent">{product.serving_size}g</div>
-                    <div className="text-sm text-muted-foreground">per portion</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="text-lg text-muted-foreground">-</div>
-                    <div className="text-sm text-muted-foreground">per portion</div>
-                  </div>
-                )}
-                
-                {product.pieces_per_package && product.package_weight ? (
-                  <div className="text-center p-3 bg-background rounded-lg border shadow-sm">
-                    <div className="text-2xl font-bold text-accent">{Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g</div>
-                    <div className="text-sm text-muted-foreground">per styck</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-3 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="text-lg text-muted-foreground">-</div>
-                    <div className="text-sm text-muted-foreground">per styck</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Grades */}
-              <div className="flex gap-3 mt-4 pt-3 border-t border-border/50">
-                {product.nutriscore_grade && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium">Nutri-Score:</span>
-                    <Badge 
-                      variant="outline" 
-                      className={`
-                        ${product.nutriscore_grade === 'a' ? 'bg-fresh-green text-white border-fresh-green' : ''}
-                        ${product.nutriscore_grade === 'b' ? 'bg-warm-yellow text-white border-warm-yellow' : ''}
-                        ${product.nutriscore_grade === 'c' ? 'bg-warm-orange text-white border-warm-orange' : ''}
-                        ${['d', 'e'].includes(product.nutriscore_grade) ? 'bg-destructive text-destructive-foreground border-destructive' : ''}
-                      `}
-                    >
-                      {product.nutriscore_grade.toUpperCase()}
-                    </Badge>
-                  </div>
-                )}
-                
-                {product.ecoscore_grade && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium">Eco-Score:</span>
-                    <Badge variant="outline" className="border-fresh-green text-fresh-green">
-                      {product.ecoscore_grade.toUpperCase()}
-                    </Badge>
-                  </div>
-                )}
-              </div>
+            {/* Grades */}
+            <div className="flex gap-3 pt-3 border-t border-border/50">
+              {product.nutriscore_grade && (
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium">Nutri-Score:</span>
+                  <Badge 
+                    variant="outline" 
+                    className={`
+                      ${product.nutriscore_grade === 'a' ? 'bg-fresh-green text-white border-fresh-green' : ''}
+                      ${product.nutriscore_grade === 'b' ? 'bg-warm-yellow text-white border-warm-yellow' : ''}
+                      ${product.nutriscore_grade === 'c' ? 'bg-warm-orange text-white border-warm-orange' : ''}
+                      ${['d', 'e'].includes(product.nutriscore_grade) ? 'bg-destructive text-destructive-foreground border-destructive' : ''}
+                    `}
+                  >
+                    {product.nutriscore_grade.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
+              
+              {product.ecoscore_grade && (
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium">Eco-Score:</span>
+                  <Badge variant="outline" className="border-fresh-green text-fresh-green">
+                    {product.ecoscore_grade.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
         </div>
