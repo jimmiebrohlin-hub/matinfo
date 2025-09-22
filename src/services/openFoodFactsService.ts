@@ -208,14 +208,36 @@ export class OpenFoodFactsService {
       }
     }
 
-    // Extract pieces per package from quantity field
+    // Extract pieces per package using improved logic
     let pieces_per_package = 1; // Default to 1 piece per package
+    
+    // Step 1: Check "quantity" field for patterns like "X st", "X-pack", "X x Y"
     if (product.quantity) {
       const quantityStr = product.quantity.toString();
-      // Look for patterns like "6 st", "6 x 40g", "6 pieces", "6 styck"
-      const piecesMatch = quantityStr.match(/(\d+)\s*(?:st|x\s*\d+g?|pieces?|styck)/i);
+      const piecesMatch = quantityStr.match(/(\d+)\s*(?:st|pack|x\s*\d+|pieces?|styck)/i);
       if (piecesMatch) {
         pieces_per_package = parseInt(piecesMatch[1]);
+      }
+    }
+    
+    // Step 2: If not found and we have both total weight and serving size, calculate
+    if (pieces_per_package === 1 && package_weight && serving_size && serving_size > 0) {
+      const calculated_pieces = Math.floor(package_weight / serving_size);
+      if (calculated_pieces > 1) {
+        pieces_per_package = calculated_pieces;
+      }
+    }
+    
+    // Step 3: Check "packaging" and "product_name" for piece patterns
+    if (pieces_per_package === 1) {
+      const fieldsToCheck = [product.packaging, product.product_name, product.product_name_sv].filter(Boolean);
+      for (const field of fieldsToCheck) {
+        const fieldStr = field.toString();
+        const piecesMatch = fieldStr.match(/(\d+)\s*(?:st|pack|x\s*\d+|pieces?|styck)/i);
+        if (piecesMatch) {
+          pieces_per_package = parseInt(piecesMatch[1]);
+          break;
+        }
       }
     }
     
