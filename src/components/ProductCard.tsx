@@ -14,6 +14,7 @@ export interface Product {
   ecoscore_grade?: string;
   nova_group?: number;
   categories?: string;
+  categories_tags?: string[];
   ingredients_text?: string;
   ingredients_text_sv?: string;
   nutrition_grades?: string;
@@ -83,6 +84,44 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     product.pieces_per_package
   );
 
+  // Get category-specific portion measurements
+  const getCategoryPortions = (categoriesTags: string[] = []) => {
+    const portions: Array<{label: string, amount: number, unit: string}> = [];
+    
+    // Beverages
+    const beverageTags = ['beverages', 'carbonated-drinks', 'sodas', 'colas', 'juices', 'waters', 'plant-milks', 'energy-drinks', 'coffees', 'teas', 'beers', 'wines'];
+    if (categoriesTags.some(tag => beverageTags.some(bt => tag.includes(bt)))) {
+      portions.push(
+        {label: 'Glas', amount: 200, unit: 'ml'},
+        {label: 'Burk', amount: 330, unit: 'ml'},
+        {label: 'Flaska', amount: 500, unit: 'ml'}
+      );
+    }
+    
+    // Sauces/Condiments
+    const sauceTags = ['sauces', 'condiments', 'mayonnaises', 'ketchups', 'mustards', 'dressings', 'jams', 'marmalades', 'honeys', 'oils', 'vinegars', 'syrups', 'pestos'];
+    if (categoriesTags.some(tag => sauceTags.some(st => tag.includes(st)))) {
+      portions.push(
+        {label: '1 tsk', amount: 5, unit: 'g'},
+        {label: '1 msk', amount: 15, unit: 'g'}
+      );
+    }
+    
+    // Dairy/Spreads
+    const dairyTags = ['dairies', 'cheeses', 'yogurts', 'cream', 'butters', 'margarines', 'cottage-cheeses', 'fermented-milks', 'plant-based-yogurts'];
+    if (categoriesTags.some(tag => dairyTags.some(dt => tag.includes(dt)))) {
+      portions.push(
+        {label: '1 tsk', amount: 5, unit: 'g'},
+        {label: '1 msk', amount: 15, unit: 'g'},
+        {label: 'En klick', amount: 10, unit: 'g'}
+      );
+    }
+    
+    return portions;
+  };
+
+  const categoryPortions = getCategoryPortions(product.categories_tags);
+
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
       <CardHeader>
@@ -119,17 +158,16 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
           {/* Product Details */}
           <div className="flex-1 space-y-4">
-            {/* 1. Package Information & SmartPoints - Ultra Compact Layout */}
+            {/* 1. SmartPoints & Package Information - Ultra Compact Layout */}
             <>
               <Separator />
               <div>
-                <h4 className="font-semibold mb-2 text-foreground">Förpackning</h4>
-                
                 {/* Main SmartPoints badge */}
                 {smartPoints && (
                   <div className="mb-3">
-                    <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30 px-4 py-1 text-base font-bold">
-                      {smartPoints.per100g} SP/100g
+                    <Badge variant="secondary" className="bg-warm-yellow/20 text-warm-yellow border-warm-yellow/30 px-4 py-1 font-bold">
+                      <span className="text-xl">{smartPoints.per100g}</span>
+                      <span className="text-sm ml-1">SP/100g</span>
                     </Badge>
                   </div>
                 )}
@@ -137,27 +175,48 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 {/* Ultra compact package info in inline format */}
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center justify-between">
-                    <span><strong>Förpackning:</strong> {product.package_weight ? `${product.package_weight}g` : 'Ej tillgänglig'}</span>
-                    <Badge variant="outline" className="ml-2 bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30">
-                      {smartPoints?.perPackage || '-'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30 text-xs px-2 py-0.5">
+                        {smartPoints?.perPackage || '-'}
+                      </Badge>
+                      <span><strong>Förpackning:</strong> {product.package_weight ? `${product.package_weight}g` : 'Ej tillgänglig'}</span>
+                    </div>
                   </div>
                   <div><strong>Antal:</strong> {product.pieces_per_package ? `${product.pieces_per_package} st` : 'Ej tillgänglig'}</div>
                   <div className="flex items-center justify-between">
-                    <span><strong>Portion:</strong> {product.serving_size ? `${product.serving_size}g` : 'Ej tillgänglig'}</span>
-                    <Badge variant="outline" className="ml-2 bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30">
-                      {smartPoints?.perServing || '-'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30 text-xs px-2 py-0.5">
+                        {smartPoints?.perServing || '-'}
+                      </Badge>
+                      <span><strong>Portion:</strong> {product.serving_size ? `${product.serving_size}g` : 'Ej tillgänglig'}</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span><strong>Per styck:</strong> {product.pieces_per_package && product.package_weight 
-                      ? `${Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g`
-                      : 'Ej tillgänglig'
-                    }</span>
-                    <Badge variant="outline" className="ml-2 bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30">
-                      {smartPoints?.perPiece || '-'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30 text-xs px-2 py-0.5">
+                        {smartPoints?.perPiece || '-'}
+                      </Badge>
+                      <span><strong>Per styck:</strong> {product.pieces_per_package && product.package_weight 
+                        ? `${Math.round((product.package_weight / product.pieces_per_package) * 10) / 10}g`
+                        : 'Ej tillgänglig'
+                      }</span>
+                    </div>
                   </div>
+                  
+                  {/* Category-specific portions */}
+                  {categoryPortions.map((portion, index) => {
+                    const portionSP = smartPoints ? Math.round((smartPoints.per100g * portion.amount) / 100) : null;
+                    return (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30 text-xs px-2 py-0.5">
+                            {portionSP || '-'}
+                          </Badge>
+                          <span><strong>{portion.label}:</strong> {portion.amount}{portion.unit}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>

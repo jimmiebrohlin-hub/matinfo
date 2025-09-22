@@ -17,39 +17,50 @@ interface ManualEanInputProps {
 }
 
 export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false, eanValue, onEanChange }: ManualEanInputProps) => {
-  const [internalEan, setInternalEan] = useState("7315360061503");
+  const [internalEan, setInternalEan] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [searchText, setSearchText] = useState("Delicatoboll");
+  const [searchText, setSearchText] = useState("");
   
   // Use controlled or uncontrolled mode
   const ean = eanValue !== undefined ? eanValue : internalEan;
   const setEan = onEanChange || setInternalEan;
 
   const handleSearch = async () => {
-    if (!ean.trim()) {
-      toast.error("Ange en EAN-kod");
-      return;
-    }
-
-    // Basic EAN validation (should be 8, 12, 13, or 14 digits)
-    const cleanEan = ean.trim().replace(/\D/g, "");
-    if (cleanEan.length < 8 || cleanEan.length > 14) {
-      toast.error("EAN-koden måste vara mellan 8-14 siffror");
+    // Prioritize EAN if both fields have values
+    const shouldSearchByEan = ean.trim();
+    const shouldSearchByText = searchText.trim() && !shouldSearchByEan;
+    
+    if (!shouldSearchByEan && !shouldSearchByText) {
+      toast.error("Ange en EAN-kod eller produktnamn");
       return;
     }
 
     setIsLoading(true);
     try {
-      console.log(`🔍 Searching for product with EAN: ${cleanEan}`);
-      const product = await OpenFoodFactsService.getProductByBarcode(cleanEan);
-      
-      if (product) {
-        console.log(`✅ Found product:`, product);
-        onProductFound(product);
-        toast.success("Produkt hittad!");
+      if (shouldSearchByEan) {
+        // Basic EAN validation (should be 8, 12, 13, or 14 digits)
+        const cleanEan = ean.trim().replace(/\D/g, "");
+        if (cleanEan.length < 8 || cleanEan.length > 14) {
+          toast.error("EAN-koden måste vara mellan 8-14 siffror");
+          return;
+        }
+
+        console.log(`🔍 Searching for product with EAN: ${cleanEan}`);
+        const product = await OpenFoodFactsService.getProductByBarcode(cleanEan);
+        
+        if (product) {
+          console.log(`✅ Found product:`, product);
+          // Update search text to match found product
+          setSearchText(product.product_name_sv || product.product_name || "");
+          onProductFound(product);
+          toast.success("Produkt hittad!");
+        } else {
+          console.log(`❌ No product found for EAN: ${cleanEan}`);
+          toast.error("Ingen produkt hittad för denna EAN-kod");
+        }
       } else {
-        console.log(`❌ No product found for EAN: ${cleanEan}`);
-        toast.error("Ingen produkt hittad för denna EAN-kod");
+        // TODO: Implement text search functionality
+        toast.error("Textsökning inte implementerad än");
       }
     } catch (error) {
       console.error("Error searching for product:", error);
@@ -71,6 +82,8 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         try {
           const product = await OpenFoodFactsService.getProductByBarcode(cleanEan);
           if (product) {
+            // Update search text to match found product
+            setSearchText(product.product_name_sv || product.product_name || "");
             onProductFound(product);
             toast.success("Produkt hittad!");
           } else {
@@ -98,14 +111,14 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         <div className="space-y-2">
           <Input
             type="text"
-            placeholder="Sök efter produktnamn..."
+            placeholder="Produkt"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             disabled={isLoading}
           />
           <Input
             type="text"
-            placeholder="Ange EAN-kod (t.ex. 7622210507501)"
+            placeholder="EAN"
             value={ean}
             onChange={(e) => setEan(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -116,7 +129,7 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         <div className="flex gap-2">
           <Button
             onClick={handleSearch}
-            disabled={!ean.trim() || isLoading}
+            disabled={(!ean.trim() && !searchText.trim()) || isLoading}
             className="flex-1"
             variant="fresh"
           >
