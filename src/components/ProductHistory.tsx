@@ -87,22 +87,6 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
                           {product.brands}
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground mt-1 font-mono">
-                        EAN: {product.id}
-                      </p>
-                      {product.nutriscore_grade && (
-                        <Badge 
-                          variant="outline" 
-                          className={`mt-2 text-xs h-5 
-                            ${product.nutriscore_grade === 'a' ? 'bg-fresh-green text-white border-fresh-green' : ''}
-                            ${product.nutriscore_grade === 'b' ? 'bg-warm-yellow text-white border-warm-yellow' : ''}
-                            ${product.nutriscore_grade === 'c' ? 'bg-warm-orange text-white border-warm-orange' : ''}
-                            ${['d', 'e'].includes(product.nutriscore_grade) ? 'bg-destructive text-destructive-foreground border-destructive' : ''}
-                          `}
-                        >
-                          {product.nutriscore_grade.toUpperCase()}
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 </div>

@@ -19,6 +19,7 @@ interface ManualEanInputProps {
 export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false, eanValue, onEanChange }: ManualEanInputProps) => {
   const [internalEan, setInternalEan] = useState("7315360061503");
   const [isLoading, setIsLoading] = useState(false);
+  const [searchText, setSearchText] = useState("Delicatoboll");
   
   // Use controlled or uncontrolled mode
   const ean = eanValue !== undefined ? eanValue : internalEan;
@@ -58,9 +59,31 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
     }
   };
 
-  const handleBarcodeDetected = (barcode: string) => {
+  const handleBarcodeDetected = async (barcode: string) => {
     setEan(barcode);
     toast.success(`Streckkod skannad: ${barcode}`);
+    
+    // Auto-search after scanning
+    setTimeout(async () => {
+      const cleanEan = barcode.trim().replace(/\D/g, "");
+      if (cleanEan.length >= 8 && cleanEan.length <= 14) {
+        setIsLoading(true);
+        try {
+          const product = await OpenFoodFactsService.getProductByBarcode(cleanEan);
+          if (product) {
+            onProductFound(product);
+            toast.success("Produkt hittad!");
+          } else {
+            toast.error("Ingen produkt hittad för denna EAN-kod");
+          }
+        } catch (error) {
+          console.error("Error searching for product:", error);
+          toast.error("Ett fel uppstod vid sökning");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }, 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -73,6 +96,13 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
     <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">
       <CardContent className="p-4 space-y-4">
         <div className="space-y-2">
+          <Input
+            type="text"
+            placeholder="Sök efter produktnamn..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            disabled={isLoading}
+          />
           <Input
             type="text"
             placeholder="Ange EAN-kod (t.ex. 7622210507501)"

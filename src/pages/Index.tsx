@@ -19,7 +19,7 @@ const Index = () => {
     const loadDefaultProducts = async () => {
       setIsLoading(true);
       try {
-        const defaultBarcodes = ["7315360061503", "7350035210169", "7310865005168", "7622201727840"];
+        const defaultBarcodes = ["7315360061503", "7350035210169", "7340083447532", "7622201727840"];
         const loadedProducts: Product[] = [];
         
         // Load the first product and set it as current

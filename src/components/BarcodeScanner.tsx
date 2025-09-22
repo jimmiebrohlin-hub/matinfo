@@ -8,10 +8,11 @@ import { BrowserMultiFormatReader } from '@zxing/library';
 
 interface BarcodeScannerProps {
   onBarcodeDetected: (barcode: string) => void;
+  autoStart?: boolean;
 }
 
-export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: BarcodeScannerProps) => {
+  const [isOpen, setIsOpen] = useState(autoStart);
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -33,6 +34,13 @@ export const BarcodeScanner = ({ onBarcodeDetected }: BarcodeScannerProps) => {
 
     try {
       setIsScanning(true);
+      
+      // Apply 2x zoom to the video element
+      if (videoRef.current) {
+        videoRef.current.style.transform = 'scale(2)';
+        videoRef.current.style.transformOrigin = 'center center';
+      }
+      
       // Use continuous scanning for better detection
       await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
         if (result) {
