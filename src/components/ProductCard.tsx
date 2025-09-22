@@ -132,7 +132,8 @@ if (normalizedTags.some(tag =>
     return portions;
   };
 
-  const categoryPortions = getCategoryPortions(product.categories_tags);
+  const categoryPortions = getCategoryPortions(product.categories?.split(',').map(tag => tag.trim()) ?? []);
+//  const categoryPortions = getCategoryPortions(product.categories_tags);
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
