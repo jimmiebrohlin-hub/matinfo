@@ -136,6 +136,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
   // --- FIX APPLIED: Use split and trim from categories string ---
   const categoryPortions = getCategoryPortions(product.categories?.split(',').map(tag => tag.trim()) ?? []);
+//  const categoryPortions = getCategoryPortions(product.categories_tags);
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
