@@ -108,14 +108,26 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     }
     
     // Dairy/Spreads
-    const dairyTags = ['dairies', 'cheeses', 'yogurts', 'cream', 'butters', 'margarines', 'cottage-cheeses', 'fermented-milks', 'plant-based-yogurts'];
-    if (categoriesTags.some(tag => dairyTags.some(dt => tag.includes(dt)))) {
-      portions.push(
-        {label: '1 tsk', amount: 5, unit: 'g'},
-        {label: '1 msk', amount: 15, unit: 'g'},
-        {label: 'En klick', amount: 10, unit: 'g'}
-      );
-    }
+const dairyTags = [
+  'dairies', 'cheese', 'cheeses', 'yogurt', 'yogurts', 'cream', 'creams',
+  'butter', 'butters', 'margarine', 'margarines', 'cottage-cheese', 'cottage-cheeses',
+  'fermented-milk', 'fermented-milks', 'fermented-milk-product', 'fermented-milk-products',
+  'fermented-cream', 'fermented-creams', 'sour-cream', 'sour-creams',
+  'plant-based-yogurt', 'plant-based-yogurts'
+];
+
+// Normalize for robust matching
+const normalizedTags = categoriesTags.map(tag => tag.toLowerCase().replace(/_/g, '-'));
+
+if (normalizedTags.some(tag =>
+  dairyTags.some(dairyTag => tag.includes(dairyTag))
+)) {
+  portions.push(
+    {label: '1 tsk', amount: 5, unit: 'g'},
+    {label: '1 msk', amount: 15, unit: 'g'},
+    {label: 'En klick', amount: 10, unit: 'g'}
+  );
+}
     
     return portions;
   };
