@@ -59,8 +59,22 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
           toast.error("Ingen produkt hittad för denna EAN-kod");
         }
       } else {
-        // TODO: Implement text search functionality
-        toast.error("Textsökning inte implementerad än");
+        // Search by text
+        console.log(`🔍 Searching for products with text: ${searchText}`);
+        const products = await OpenFoodFactsService.searchProductsByText(searchText);
+        
+        if (products.length > 0) {
+          // Take the first result
+          const product = products[0];
+          console.log(`✅ Found product by text:`, product);
+          // Update EAN field to match found product
+          setEan(product.id);
+          onProductFound(product);
+          toast.success("Produkt hittad!");
+        } else {
+          console.log(`❌ No products found for text: ${searchText}`);
+          toast.error("Ingen produkt hittad för denna sökning");
+        }
       }
     } catch (error) {
       console.error("Error searching for product:", error);

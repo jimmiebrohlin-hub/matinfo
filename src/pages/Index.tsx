@@ -12,42 +12,8 @@ const Index = () => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productHistory, setProductHistory] = useState<Product[]>([]);
-  const [currentEan, setCurrentEan] = useState("7315360061503");
+  const [currentEan, setCurrentEan] = useState("");
 
-  // Always load these 3 products on app start
-  useEffect(() => {
-    const loadDefaultProducts = async () => {
-      setIsLoading(true);
-      try {
-        const defaultBarcodes = ["7315360061503", "7310865001818", "7340083447532", "7622201727840", "7318690140412", "7310070005441", "6410500090014", "7318690140412", "7310130006067", "4016241050304", "7318690146261", "7350028546411"];
-        const loadedProducts: Product[] = [];
-        
-        // Load the first product and set it as current
-        for (const barcode of defaultBarcodes) {
-          try {
-            const product = await OpenFoodFactsService.getProductByBarcode(barcode);
-            if (product) {
-              loadedProducts.push(product);
-              if (barcode === "7315360061503") {
-                setCurrentProduct(product);
-                setCurrentEan(barcode);
-              }
-            }
-          } catch (error) {
-            console.error(`Error loading product ${barcode}:`, error);
-          }
-        }
-        
-        setProductHistory(loadedProducts);
-      } catch (error) {
-        console.error("Error loading default products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadDefaultProducts();
-  }, []);
 
   const handleProductFound = (product: Product) => {
     setCurrentProduct(product);
@@ -147,17 +113,6 @@ const Index = () => {
             {/* Product Display */}
             <ProductCard product={currentProduct} isLoading={isLoading} />
 
-            {/* Stats */}
-            {productHistory.length > 0 && (
-              <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-card backdrop-blur-sm rounded-full shadow-card">
-                  <ShoppingCart className="w-5 h-5 text-warm-orange" />
-                  <span className="text-foreground font-medium">
-                    {productHistory.length} produkter upptäckta
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* History Sidebar */}

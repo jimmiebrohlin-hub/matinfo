@@ -271,6 +271,52 @@ export class OpenFoodFactsService {
   /**
    * Get product by barcode/EAN
    */
+  /**
+   * Search for products by text (product name)
+   */
+  static async searchProductsByText(searchText: string): Promise<Product[]> {
+    try {
+      const searchParams = new URLSearchParams({
+        search_terms: searchText,
+        countries_tags_en: "sweden",
+        page_size: "10",
+        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
+      });
+
+      console.log(`🔍 Searching for products with text: ${searchText}`);
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        console.log(`❌ API response not ok: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`📊 Text search API response:`, data);
+
+      if (data && data.products) {
+        return data.products
+          .filter((product: any) => 
+            product.product_name || product.product_name_en || product.product_name_sv
+          )
+          .map((product: any) => this.normalizeProduct(product));
+      }
+      return [];
+    } catch (error) {
+      console.error("Error searching products by text:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get product by barcode/EAN
+   */
   static async getProductByBarcode(barcode: string): Promise<Product | null> {
     try {
       const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity`);

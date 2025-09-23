@@ -77,7 +77,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   const imageUrl = product.image_front_url || product.image_url;
   const categories = product.categories?.split(',').slice(0, 3) || [];
   
-  // Calculate SmartPoints
+  // Calculate SmartPoints with alignment logic for portion and piece sizes
   const smartPoints = calculateProductSmartPoints(
     product.energy_100g,
     product.saturated_fat_100g,
@@ -87,6 +87,21 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     product.package_weight,
     product.pieces_per_package
   );
+
+  // Align portion and piece sizes if they are very similar (within 10g difference)
+  let alignedServingSize = product.serving_size;
+  let alignedPieceWeight = product.package_weight && product.pieces_per_package 
+    ? product.package_weight / product.pieces_per_package 
+    : null;
+
+  if (alignedServingSize && alignedPieceWeight && Math.abs(alignedServingSize - alignedPieceWeight) <= 10) {
+    // Use the larger value for both to avoid confusion
+    const alignedValue = Math.max(alignedServingSize, alignedPieceWeight);
+    alignedServingSize = alignedValue;
+    if (product.package_weight && product.pieces_per_package) {
+      // Don't actually change the piece calculation, just use aligned serving
+    }
+  }
 
   // Analyze product category and determine special measurements
   const analyzeProductCategory = (categoriesTags: string[] = []) => {
@@ -191,26 +206,26 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                   </div>
 
                   {/* Piece */}
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${smartPoints?.perPiece ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {smartPoints?.perPiece || '-'}
-                    </Badge>
-                    <span className={product.pieces_per_package && product.package_weight ? '' : 'text-muted-foreground'}>
-                      <strong>Styck:</strong> {product.pieces_per_package && product.package_weight 
-                        ? `${Math.round(product.package_weight / product.pieces_per_package)}g x ${product.pieces_per_package} st`
-                        : 'Ej tillgänglig'
-                      }
-                    </span>
-                  </div>
+                   <div className="flex items-center gap-2">
+                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${smartPoints?.perPiece && product.pieces_per_package !== 1 ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       {smartPoints?.perPiece || '-'}
+                     </Badge>
+                     <span className={product.pieces_per_package && product.package_weight && product.pieces_per_package !== 1 ? '' : 'text-muted-foreground'}>
+                       <strong>Styck:</strong> {product.pieces_per_package && product.package_weight 
+                         ? `${Math.round(product.package_weight / product.pieces_per_package)}g (${product.pieces_per_package} st)`
+                         : 'Ej tillgänglig'
+                       }
+                     </span>
+                   </div>
 
                   {/* Serving */}
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${smartPoints?.perServing ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
                       {smartPoints?.perServing || '-'}
                     </Badge>
-                    <span className={product.serving_size ? '' : 'text-muted-foreground'}>
-                      <strong>Portion:</strong> {product.serving_size ? `${Math.round(product.serving_size)}g` : 'Ej tillgänglig'}
-                    </span>
+                     <span className={alignedServingSize ? '' : 'text-muted-foreground'}>
+                       <strong>Portion:</strong> {alignedServingSize ? `${Math.round(alignedServingSize)}g` : 'Ej tillgänglig'}
+                     </span>
                   </div>
 
                   {/* Special measurements - always show */}
@@ -342,10 +357,6 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </>
             )}
 
-            {/* 5. EAN */}
-            <div className="pt-2 border-t border-border">
-              <span className="text-xs text-warm-neutral">EAN: {product.id}</span>
-            </div>
 
             {/* 6. Categories */}
             {categories.length > 0 && (
