@@ -89,7 +89,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-3">
           <div className="text-center">
             <h1 className="text-2xl font-bold bg-gradient-warm bg-clip-text text-transparent">
-              Svenska Matupptäckaren
+              Matinfo
             </h1>
           </div>
         </div>
