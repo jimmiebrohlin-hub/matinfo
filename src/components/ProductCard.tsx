@@ -19,8 +19,10 @@ export interface Product {
   ingredients_text_sv?: string;
   nutrition_grades?: string;
   energy_100g?: number;
+  energy_kcal_100g?: number;
   fat_100g?: number;
   saturated_fat_100g?: number;
+  carbohydrates_100g?: number;
   sugars_100g?: number;
   salt_100g?: number;
   fiber_100g?: number;
@@ -29,6 +31,8 @@ export interface Product {
   package_weight?: number;
   serving_size?: number;
   pieces_per_package?: number;
+  packaging?: string;
+  quantity?: string;
 }
 
 interface ProductCardProps {
@@ -76,7 +80,6 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   // Calculate SmartPoints
   const smartPoints = calculateProductSmartPoints(
     product.energy_100g,
-    product.fat_100g,
     product.saturated_fat_100g,
     product.sugars_100g,
     product.proteins_100g,

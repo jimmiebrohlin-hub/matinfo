@@ -12,8 +12,8 @@ interface ProductHistoryProps {
 }
 
 export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps) => {
-  const handleExportCSV = () => {
-    exportProductsToCSV(products);
+  const handleExportCSV = async () => {
+    await exportProductsToCSV(products);
   };
 
   if (products.length === 0) {
