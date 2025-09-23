@@ -174,13 +174,10 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 <div className="space-y-1 text-sm">
                   {/* 100g - always show */}
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {smartPoints?.per100g || '-'}
-                    </Badge>
-                    <span className={smartPoints ? '' : 'text-muted-foreground'}>
+                    <Badge variant="outline" className={`px-3 py-1 ${smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
                       <span className="text-xl font-bold">{smartPoints?.per100g || '-'}</span>
                       <span className="text-sm ml-1">SP / 100g</span>
-                    </span>
+                    </Badge>
                   </div>
 
                   {/* Package */}
