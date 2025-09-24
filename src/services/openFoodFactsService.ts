@@ -93,7 +93,7 @@ export class OpenFoodFactsService {
         categories_tags_en: randomCategory,
         countries_tags_en: "sweden",
         page_size: "50",
-        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments"
+        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
       });
 
       console.log(`🔍 Searching for products in category: ${randomCategory}`);
