@@ -173,16 +173,24 @@ export class OpenFoodFactsService {
     // Try quantity first (this is usually the most reliable - OFF's main weight field)
     if (product.quantity) {
       const quantityStr = product.quantity.toString();
-      // Look for patterns like "85 g", "3 oz (85 g)", "240g", "1.5 kg"
-      const weightMatch = quantityStr.match(/\((\d+(?:\.\d+)?)\s*g\)|(\d+(?:\.\d+)?)\s*g/i);
+      console.log(`🔍 Processing quantity field: "${quantityStr}" for product: ${product.product_name || product.code}`);
+      
+      // Look for patterns like "185 g", "85g", "3 oz (85 g)", "240g", "1.5 kg"
+      // Enhanced regex to be more flexible with spacing and formats
+      const weightMatch = quantityStr.match(/(?:\((\d+(?:[,.]?\d+)?)\s*g\))|(\d+(?:[,.]?\d+)?)\s*g(?:\b|$)/i);
       if (weightMatch) {
         // Use the value in parentheses if available, otherwise use the direct match
-        package_weight = parseFloat(weightMatch[1] || weightMatch[2]);
+        const weightValue = weightMatch[1] || weightMatch[2];
+        package_weight = parseFloat(weightValue.replace(',', '.'));
+        console.log(`✅ Found weight from quantity: ${package_weight}g`);
       } else {
         // Try kg to g conversion
-        const kgMatch = quantityStr.match(/(\d+(?:\.\d+)?)\s*kg/i);
+        const kgMatch = quantityStr.match(/(\d+(?:[,.]?\d+)?)\s*kg(?:\b|$)/i);
         if (kgMatch) {
-          package_weight = parseFloat(kgMatch[1]) * 1000;
+          package_weight = parseFloat(kgMatch[1].replace(',', '.')) * 1000;
+          console.log(`✅ Found weight from kg conversion: ${package_weight}g`);
+        } else {
+          console.log(`❌ No weight pattern found in quantity: "${quantityStr}"`);
         }
       }
     }
