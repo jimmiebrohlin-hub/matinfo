@@ -12,12 +12,11 @@ const Index = () => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productHistory, setProductHistory] = useState<Product[]>([]);
-  const [currentEan, setCurrentEan] = useState("");
+  
 
 
   const handleProductFound = (product: Product) => {
     setCurrentProduct(product);
-    setCurrentEan(product.id);
     
     // Add to history if not already present
     const isAlreadyInHistory = productHistory.some(p => p.id === product.id);
@@ -27,7 +26,6 @@ const Index = () => {
   };
 
   const handleProductClick = async (product: Product) => {
-    setCurrentEan(product.id);
     setCurrentProduct(product);
     
     // Optionally refetch the product for the latest data
@@ -48,7 +46,6 @@ const Index = () => {
       
       if (product) {
         setCurrentProduct(product);
-        setCurrentEan(product.id);
         
         // Add to history if not already present
         const isAlreadyInHistory = productHistory.some(p => p.id === product.id);
@@ -106,8 +103,6 @@ const Index = () => {
               onProductFound={handleProductFound} 
               onDiscoverProduct={handleDiscoverProduct}
               isDiscovering={isLoading}
-              eanValue={currentEan}
-              onEanChange={setCurrentEan}
             />
 
             {/* Product Display */}

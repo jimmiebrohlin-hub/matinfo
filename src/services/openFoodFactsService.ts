@@ -284,10 +284,16 @@ export class OpenFoodFactsService {
    */
   static async searchProductsByText(searchText: string): Promise<Product[]> {
     try {
+      // Use multiple search approaches for better results
       const searchParams = new URLSearchParams({
         search_terms: searchText,
-        countries_tags_en: "sweden",
-        page_size: "10",
+        search_simple: "1", // Enable simple search
+        action: "process",
+        tagtype_0: "countries",
+        tag_contains_0: "contains",
+        tag_0: "sweden",
+        page_size: "20",
+        sort_by: "popularity_key", // Sort by popularity for better results
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
       });
 
@@ -308,20 +314,28 @@ export class OpenFoodFactsService {
       const data = await response.json();
       console.log(`📊 Text search API response:`, data);
 
-      if (data && data.products) {
-        return data.products
+      if (data && data.products && data.products.length > 0) {
+        const filteredProducts = data.products
           .filter((product: any) => 
             product.product_name || product.product_name_en || product.product_name_sv
           )
-          .map((product: any) => this.normalizeProduct(product));
+          .map((product: any) => this.normalizeProduct(product))
+          .filter((product: Product) => 
+            // Additional filtering to ensure quality results
+            product.product_name && product.product_name.length > 0
+          );
+        
+        console.log(`✅ Filtered ${filteredProducts.length} products from ${data.products.length} results`);
+        return filteredProducts;
       }
+      
+      console.log(`❌ No products found in API response`);
       return [];
     } catch (error) {
       console.error("Error searching products by text:", error);
-      return [];
+      throw error;
     }
   }
-
   /**
    * Get product by barcode/EAN
    */

@@ -12,67 +12,52 @@ interface ManualEanInputProps {
   onProductFound: (product: Product) => void;
   onDiscoverProduct: () => void;
   isDiscovering?: boolean;
-  eanValue?: string;
-  onEanChange?: (ean: string) => void;
 }
 
-export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false, eanValue, onEanChange }: ManualEanInputProps) => {
-  const [internalEan, setInternalEan] = useState("");
+export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscovering = false }: ManualEanInputProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  
-  // Use controlled or uncontrolled mode
-  const ean = eanValue !== undefined ? eanValue : internalEan;
-  const setEan = onEanChange || setInternalEan;
+  const [searchInput, setSearchInput] = useState("");
+  const [isManuallyEntered, setIsManuallyEntered] = useState(false);
 
   const handleSearch = async () => {
-    // Prioritize EAN if both fields have values
-    const shouldSearchByEan = ean.trim();
-    const shouldSearchByText = searchText.trim() && !shouldSearchByEan;
+    const searchValue = searchInput.trim();
     
-    if (!shouldSearchByEan && !shouldSearchByText) {
+    if (!searchValue) {
       toast.error("Ange en EAN-kod eller produktnamn");
       return;
     }
 
     setIsLoading(true);
     try {
-      if (shouldSearchByEan) {
-        // Basic EAN validation (should be 8, 12, 13, or 14 digits)
-        const cleanEan = ean.trim().replace(/\D/g, "");
-        if (cleanEan.length < 8 || cleanEan.length > 14) {
-          toast.error("EAN-koden måste vara mellan 8-14 siffror");
-          return;
-        }
-
-        console.log(`🔍 Searching for product with EAN: ${cleanEan}`);
-        const product = await OpenFoodFactsService.getProductByBarcode(cleanEan);
+      // Check if input looks like an EAN (numeric, 8-14 digits)
+      const isNumeric = /^\d+$/.test(searchValue);
+      const isValidEanLength = searchValue.length >= 8 && searchValue.length <= 14;
+      
+      if (isNumeric && isValidEanLength) {
+        console.log(`🔍 Searching for product with EAN: ${searchValue}`);
+        const product = await OpenFoodFactsService.getProductByBarcode(searchValue);
         
         if (product) {
           console.log(`✅ Found product:`, product);
-          // Update search text to match found product
-          setSearchText(product.product_name_sv || product.product_name || "");
           onProductFound(product);
           toast.success("Produkt hittad!");
         } else {
-          console.log(`❌ No product found for EAN: ${cleanEan}`);
+          console.log(`❌ No product found for EAN: ${searchValue}`);
           toast.error("Ingen produkt hittad för denna EAN-kod");
         }
       } else {
         // Search by text
-        console.log(`🔍 Searching for products with text: ${searchText}`);
-        const products = await OpenFoodFactsService.searchProductsByText(searchText);
+        console.log(`🔍 Searching for products with text: ${searchValue}`);
+        const products = await OpenFoodFactsService.searchProductsByText(searchValue);
         
         if (products.length > 0) {
           // Take the first result
           const product = products[0];
           console.log(`✅ Found product by text:`, product);
-          // Update EAN field to match found product
-          setEan(product.id);
           onProductFound(product);
           toast.success("Produkt hittad!");
         } else {
-          console.log(`❌ No products found for text: ${searchText}`);
+          console.log(`❌ No products found for text: ${searchValue}`);
           toast.error("Ingen produkt hittad för denna sökning");
         }
       }
@@ -85,32 +70,10 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
-    setEan(barcode);
+    // Only populate input, don't auto-search
+    setSearchInput(barcode);
+    setIsManuallyEntered(false); // This was scanned, not manually entered
     toast.success(`Streckkod skannad: ${barcode}`);
-    
-    // Auto-search after scanning
-    setTimeout(async () => {
-      const cleanEan = barcode.trim().replace(/\D/g, "");
-      if (cleanEan.length >= 8 && cleanEan.length <= 14) {
-        setIsLoading(true);
-        try {
-          const product = await OpenFoodFactsService.getProductByBarcode(cleanEan);
-          if (product) {
-            // Update search text to match found product
-            setSearchText(product.product_name_sv || product.product_name || "");
-            onProductFound(product);
-            toast.success("Produkt hittad!");
-          } else {
-            toast.error("Ingen produkt hittad för denna EAN-kod");
-          }
-        } catch (error) {
-          console.error("Error searching for product:", error);
-          toast.error("Ett fel uppstod vid sökning");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    }, 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -125,16 +88,12 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         <div className="space-y-2">
           <Input
             type="text"
-            placeholder="Produkt"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            disabled={isLoading}
-          />
-          <Input
-            type="text"
-            placeholder="EAN"
-            value={ean}
-            onChange={(e) => setEan(e.target.value)}
+            placeholder="Sök produkt eller ange EAN-kod"
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              setIsManuallyEntered(true);
+            }}
             onKeyPress={handleKeyPress}
             disabled={isLoading}
           />
@@ -143,7 +102,7 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         <div className="flex gap-2">
           <Button
             onClick={handleSearch}
-            disabled={(!ean.trim() && !searchText.trim()) || isLoading}
+            disabled={!searchInput.trim() || isLoading}
             className="flex-1"
             variant="fresh"
           >
