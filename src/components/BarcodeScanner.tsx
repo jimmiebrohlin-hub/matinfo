@@ -35,19 +35,36 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
     try {
       setIsScanning(true);
       
-      // Apply 2x zoom to the video element
+      // Configure video constraints for better barcode detection
+      const constraints = {
+        video: {
+          facingMode: 'environment', // Use back camera on mobile
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 },
+          focusMode: 'continuous',
+          advanced: [
+            { focusMode: 'continuous' },
+            { focusDistance: { ideal: 0.1 } }
+          ]
+        }
+      };
+      
+      // Apply slight zoom for better detection
       if (videoRef.current) {
-        videoRef.current.style.transform = 'scale(2)';
+        videoRef.current.style.transform = 'scale(1.2)';
         videoRef.current.style.transformOrigin = 'center center';
       }
       
-      // Use continuous scanning for better detection
+      // Enhanced continuous scanning with better error handling
       await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
         if (result) {
-          handleBarcodeDetected(result.getText());
+          const barcodeText = result.getText();
+          console.log(`📷 Barcode detected: ${barcodeText}`);
+          handleBarcodeDetected(barcodeText);
         }
-        if (error && !(error.name === 'NotFoundException')) {
-          console.error('Error scanning barcode:', error);
+        // Only log non-routine errors (NotFoundException is expected when no barcode is visible)
+        if (error && error.name !== 'NotFoundException' && error.name !== 'ChecksumException') {
+          console.warn('Scanner error:', error.name);
         }
       });
     } catch (err) {

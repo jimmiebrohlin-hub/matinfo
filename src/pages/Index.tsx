@@ -12,7 +12,64 @@ const Index = () => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productHistory, setProductHistory] = useState<Product[]>([]);
-  
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Predefined products to populate the history
+  const PREDEFINED_EANS = [
+    "7318690140412", "7622210578464", "7310070382306", "7310700443698", 
+    "4016241050526", "7622201727789", "6408432087851", "7310401047003", "7318690136156"
+  ];
+
+  // Initialize with predefined + random products
+  useEffect(() => {
+    const initializeProducts = async () => {
+      try {
+        console.log("🚀 Initializing product list...");
+        
+        // Get predefined products
+        const predefinedProducts = await OpenFoodFactsService.getProductsByBarcodes(PREDEFINED_EANS);
+        console.log(`✅ Found ${predefinedProducts.length} predefined products`);
+        
+        // Get random products to fill up to 10 total
+        const randomProducts: Product[] = [];
+        const targetTotal = 10;
+        const attempts = Math.max(15, targetTotal - predefinedProducts.length + 5); // Extra attempts for safety
+        
+        for (let i = 0; i < attempts && (predefinedProducts.length + randomProducts.length) < targetTotal; i++) {
+          try {
+            const randomProduct = await OpenFoodFactsService.getRandomSwedishProduct();
+            if (randomProduct && 
+                !predefinedProducts.some(p => p.id === randomProduct.id) &&
+                !randomProducts.some(p => p.id === randomProduct.id)) {
+              randomProducts.push(randomProduct);
+              console.log(`📦 Added random product: ${randomProduct.product_name || randomProduct.id}`);
+            }
+          } catch (error) {
+            console.warn(`Failed to get random product ${i + 1}:`, error);
+          }
+        }
+        
+        // Combine and shuffle
+        const allProducts = [...predefinedProducts, ...randomProducts];
+        const shuffledProducts = allProducts.sort(() => Math.random() - 0.5);
+        
+        console.log(`🎯 Initialized with ${shuffledProducts.length} products total`);
+        setProductHistory(shuffledProducts);
+        
+      } catch (error) {
+        console.error("Error initializing products:", error);
+        toast({
+          title: "Kunde inte ladda produkter",
+          description: "Försök att uppdatera sidan",
+          variant: "destructive",
+        });
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeProducts();
+  }, [toast]);
 
 
   const handleProductFound = (product: Product) => {

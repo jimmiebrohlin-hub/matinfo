@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { Product } from "./ProductCard";
 import { exportProductsToCSV } from "@/utils/csvExport";
+import { detectProductCategory } from "@/utils/productCategories";
 
 interface ProductHistoryProps {
   products: Product[];
@@ -59,6 +60,12 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
           <div className="p-4 space-y-3">
             {products.map((product, index) => {
               const displayName = product.product_name_sv || product.product_name || "Okänd produkt";
+              const category = detectProductCategory(
+                product.product_name || product.product_name_sv,
+                product.categories,
+                product.brands
+              );
+              
               return (
                 <div
                   key={`${product.id}-${index}`}
@@ -82,11 +89,16 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
                       <h4 className="font-medium text-sm text-foreground truncate">
                         {displayName}
                       </h4>
-                      {product.brands && (
-                        <p className="text-xs text-warm-neutral truncate mt-1">
-                          {product.brands}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 h-auto">
+                          {category}
+                        </Badge>
+                        {product.brands && (
+                          <p className="text-xs text-warm-neutral truncate">
+                            {product.brands}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

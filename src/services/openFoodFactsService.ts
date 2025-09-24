@@ -284,20 +284,21 @@ export class OpenFoodFactsService {
    */
   static async searchProductsByText(searchText: string): Promise<Product[]> {
     try {
-      // Use multiple search approaches for better results
+      // Improved search without overly restrictive filtering
       const searchParams = new URLSearchParams({
         search_terms: searchText,
-        search_simple: "1", // Enable simple search
+        search_simple: "1",
         action: "process",
-        tagtype_0: "countries",
-        tag_contains_0: "contains",
-        tag_0: "sweden",
         page_size: "20",
-        sort_by: "popularity_key", // Sort by popularity for better results
+        // Remove Sweden restriction for better variety in text search
+        // Add random sort component for more varied results
+        sort_by: Math.random() > 0.5 ? "popularity_key" : "last_modified_t",
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
       });
 
-      console.log(`🔍 Searching for products with text: ${searchText}`);
+      console.log(`🔍 Searching for products with text: "${searchText}"`);
+      console.log(`📍 Search URL: ${BASE_URL}/api/v2/search?${searchParams}`);
+      
       const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
         method: 'GET',
         headers: {
@@ -312,16 +313,20 @@ export class OpenFoodFactsService {
       }
       
       const data = await response.json();
-      console.log(`📊 Text search API response:`, data);
+      console.log(`📊 Text search response for "${searchText}":`, {
+        count: data.count,
+        products_found: data.products?.length || 0,
+        first_product: data.products?.[0]?.product_name || data.products?.[0]?.code
+      });
 
       if (data && data.products && data.products.length > 0) {
         const filteredProducts = data.products
           .filter((product: any) => 
-            product.product_name || product.product_name_en || product.product_name_sv
+            (product.product_name || product.product_name_en || product.product_name_sv) &&
+            (product.image_front_url || product.image_url) // Ensure we have images
           )
           .map((product: any) => this.normalizeProduct(product))
           .filter((product: Product) => 
-            // Additional filtering to ensure quality results
             product.product_name && product.product_name.length > 0
           );
         
@@ -329,12 +334,39 @@ export class OpenFoodFactsService {
         return filteredProducts;
       }
       
-      console.log(`❌ No products found in API response`);
+      console.log(`❌ No products found in API response for "${searchText}"`);
       return [];
     } catch (error) {
       console.error("Error searching products by text:", error);
       throw error;
     }
+  }
+
+  /**
+   * Get multiple products by their barcodes/EANs
+   */
+  static async getProductsByBarcodes(barcodes: string[]): Promise<Product[]> {
+    const products: Product[] = [];
+    
+    // Process in chunks to avoid overwhelming the API
+    for (let i = 0; i < barcodes.length; i += 5) {
+      const chunk = barcodes.slice(i, i + 5);
+      const chunkPromises = chunk.map(barcode => this.getProductByBarcode(barcode));
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      
+      chunkResults.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          products.push(result.value);
+        }
+      });
+      
+      // Small delay to be respectful to the API
+      if (i + 5 < barcodes.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    return products;
   }
   /**
    * Get product by barcode/EAN
