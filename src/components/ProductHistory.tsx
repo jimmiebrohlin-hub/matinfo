@@ -60,7 +60,7 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
           <div className="p-4 space-y-3">
             {products.map((product, index) => {
               const displayName = product.product_name_sv || product.product_name || "Okänd produkt";
-              const category = detectProductCategory(
+              const { customCategory } = detectProductCategory(
                 product.product_name || product.product_name_sv,
                 product.categories,
                 product.brands
@@ -91,7 +91,7 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
                       </h4>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className="text-xs px-1.5 py-0.5 h-auto">
-                          {category}
+                          {customCategory}
                         </Badge>
                         {product.brands && (
                           <p className="text-xs text-warm-neutral truncate">

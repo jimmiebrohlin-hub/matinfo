@@ -104,15 +104,15 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     }
   }
 
-  // Determine special measurements based on product category
-  const getSpecialMeasurements = (category: string) => {
+  // Determine special measurements based on custom product category
+  const getSpecialMeasurements = (customCategory: string) => {
     const specialMeasurements = {
       glas: false,
       tsk: false,
       msk: false
     };
 
-    switch (category) {
+    switch (customCategory) {
       case 'Dryck':
       case 'Kaffe':
         specialMeasurements.glas = true;
@@ -131,8 +131,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   };
 
   // Get product category using the centralized function
-  const category = detectProductCategory(product.product_name, product.categories, product.brands);
-  const specialMeasurements = getSpecialMeasurements(category);
+  const { customCategory } = detectProductCategory(product.product_name, product.categories, product.brands);
+  const specialMeasurements = getSpecialMeasurements(customCategory);
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
@@ -255,7 +255,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 <h4 className="font-semibold mb-2 text-foreground">Produktkategori</h4>
                 <div className="space-y-2">
                   <Badge variant="secondary" className="bg-fresh-green/20 text-fresh-green border-fresh-green/30">
-                    {category}
+                    {customCategory}
                   </Badge>
                 </div>
               </div>

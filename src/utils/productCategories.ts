@@ -179,12 +179,16 @@ export const PRODUCT_CATEGORIES: ProductCategoryKeywords[] = [
   }
 ];
 
+export interface ProductCategoryResult {
+  customCategory: string;
+}
+
 export function detectProductCategory(
   productName?: string, 
   categories?: string, 
   brands?: string
-): string {
-  if (!productName && !categories) return "Okategoriserad";
+): ProductCategoryResult {
+  if (!productName && !categories) return { customCategory: "Okategoriserad" };
   
   const searchText = [productName, categories, brands]
     .filter(Boolean)
@@ -224,9 +228,9 @@ export function detectProductCategory(
     );
     
     if (hasKeywordMatch || hasCategoryMatch) {
-      return category.name;
+      return { customCategory: category.name };
     }
   }
   
-  return "Mat & Dryck";
+  return { customCategory: "Mat & Dryck" };
 }
