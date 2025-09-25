@@ -57,7 +57,7 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
       
       // Apply slight zoom for better detection
       if (videoRef.current) {
-        videoRef.current.style.transform = 'scale(1.9)';
+        videoRef.current.style.transform = 'scale(1.1)';
         videoRef.current.style.transformOrigin = 'center center';
       }
       
