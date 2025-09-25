@@ -35,16 +35,22 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
     try {
       setIsScanning(true);
       
-      // Configure video constraints for better barcode detection
+      // Enhanced video constraints for better barcode detection
       const constraints = {
         video: {
           facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
+          width: { ideal: 1920, min: 640, max: 1920 },
+          height: { ideal: 1080, min: 480, max: 1080 },
+          frameRate: { ideal: 30, min: 15, max: 30 },
           focusMode: 'continuous',
+          exposureMode: 'continuous',
+          whiteBalanceMode: 'continuous',
           advanced: [
             { focusMode: 'continuous' },
-            { focusDistance: { ideal: 0.1 } }
+            { focusDistance: { ideal: 0.1 } },
+            { exposureMode: 'continuous' },
+            { brightness: { ideal: 0.5 } },
+            { contrast: { ideal: 1.2 } }
           ]
         }
       };
@@ -55,15 +61,31 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
         videoRef.current.style.transformOrigin = 'center center';
       }
       
-      // Enhanced continuous scanning with better error handling
+      // Enhanced scanning with multiple decode attempts and rotation handling
+      const decodeOptions = {
+        tryHarder: true,
+        formats: [
+          'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39',
+          'ITF', 'CODABAR', 'RSS_14', 'RSS_EXPANDED'
+        ],
+        multiple: false,
+        inverted: true, // Also try inverted colors
+        rotation: [0, 90, 180, 270] // Try multiple rotations
+      };
+      
       await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
         if (result) {
           const barcodeText = result.getText();
-          console.log(`📷 Barcode detected: ${barcodeText}`);
-          handleBarcodeDetected(barcodeText);
+          // Validate EAN format (should be numeric and proper length)
+          if (/^\d{8,14}$/.test(barcodeText)) {
+            console.log(`📷 Valid barcode detected: ${barcodeText}`);
+            handleBarcodeDetected(barcodeText);
+          } else {
+            console.log(`📷 Invalid barcode format: ${barcodeText}`);
+          }
         }
-        // Only log non-routine errors (NotFoundException is expected when no barcode is visible)
-        if (error && error.name !== 'NotFoundException' && error.name !== 'ChecksumException') {
+        // Only log significant errors
+        if (error && !['NotFoundException', 'ChecksumException', 'FormatException'].includes(error.name)) {
           console.warn('Scanner error:', error.name);
         }
       });

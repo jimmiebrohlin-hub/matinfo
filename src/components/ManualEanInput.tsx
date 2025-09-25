@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Loader2, Sparkles } from "lucide-react";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { ProductSearchResults } from "./ProductSearchResults";
 import { OpenFoodFactsService } from "@/services/openFoodFactsService";
 import { Product } from "./ProductCard";
 import { toast } from "sonner";
@@ -18,6 +19,8 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [isManuallyEntered, setIsManuallyEntered] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
   const handleSearch = async () => {
     const searchValue = searchInput.trim();
@@ -46,16 +49,16 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
           toast.error("Ingen produkt hittad för denna EAN-kod");
         }
       } else {
-        // Search by text
+        // Search by text - show results for user to choose
         console.log(`🔍 Searching for products with text: ${searchValue}`);
         const products = await OpenFoodFactsService.searchProductsByText(searchValue);
         
         if (products.length > 0) {
-          // Take the first result
-          const product = products[0];
-          console.log(`✅ Found product by text:`, product);
-          onProductFound(product);
-          toast.success("Produkt hittad!");
+          // Show top 5 results for user to choose from
+          const topResults = products.slice(0, 5);
+          setSearchResults(topResults);
+          setShowResults(true);
+          toast.success(`Hittade ${products.length} produkter`);
         } else {
           console.log(`❌ No products found for text: ${searchValue}`);
           toast.error("Ingen produkt hittad för denna sökning");
@@ -70,10 +73,27 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
-    // Only populate input, don't auto-search
+    // Auto-search when barcode is detected
     setSearchInput(barcode);
-    setIsManuallyEntered(false); // This was scanned, not manually entered
-    toast.success(`Streckkod skannad: ${barcode}`);
+    setIsManuallyEntered(false);
+    
+    // Automatically search for the product
+    try {
+      console.log(`🔍 Auto-searching for scanned EAN: ${barcode}`);
+      const product = await OpenFoodFactsService.getProductByBarcode(barcode);
+      
+      if (product) {
+        console.log(`✅ Found product:`, product);
+        onProductFound(product);
+        toast.success("Produkt hittad!");
+      } else {
+        console.log(`❌ No product found for EAN: ${barcode}`);
+        toast.error("Ingen produkt hittad för denna EAN-kod");
+      }
+    } catch (error) {
+      console.error("Error auto-searching for scanned product:", error);
+      toast.error("Ett fel uppstod vid sökning");
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -81,6 +101,30 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
       handleSearch();
     }
   };
+
+  const handleProductSelect = (product: Product) => {
+    onProductFound(product);
+    setShowResults(false);
+    setSearchResults([]);
+    toast.success("Produkt vald!");
+  };
+
+  const handleBackToSearch = () => {
+    setShowResults(false);
+    setSearchResults([]);
+  };
+
+  // Show search results if we have them
+  if (showResults && searchResults.length > 0) {
+    return (
+      <ProductSearchResults
+        products={searchResults}
+        onProductSelect={handleProductSelect}
+        onBack={handleBackToSearch}
+        searchQuery={searchInput}
+      />
+    );
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">

@@ -21,7 +21,7 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
     return (
       <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-foreground">Upptäckta Produkter</CardTitle>
+          <CardTitle className="text-lg text-foreground">Produkthistorik</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-warm-neutral text-sm text-center">
@@ -37,7 +37,7 @@ export const ProductHistory = ({ products, onProductClick }: ProductHistoryProps
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg text-foreground">
-            Upptäckta Produkter
+            Produkthistorik
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-warm-orange text-white">
