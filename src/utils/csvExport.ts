@@ -1,5 +1,6 @@
 import { Product } from "@/components/ProductCard";
 import { OpenFoodFactsService } from "@/services/openFoodFactsService";
+import { detectProductCategory } from "@/utils/productCategories";
 
 /**
  * Export products to CSV format with complete data
@@ -25,7 +26,7 @@ export const exportProductsToCSV = async (products: Product[], filename: string 
 
     // Comprehensive CSV headers
     const headers = [
-      "EAN", "Produktnamn", "Tillverkare", "Kategorier", "Ingredienser",
+      "EAN", "Produktnamn", "Tillverkare", "Anpassad Kategori", "Kategorier", "Ingredienser",
       "Nutri-Score", "Eco-Score", "NOVA Grupp",
       "Energi (kJ/100g)", "Energi (kcal/100g)", "Fett (g/100g)", "Mättat fett (g/100g)",
       "Kolhydrater (g/100g)", "Socker (g/100g)", "Fiber (g/100g)", "Protein (g/100g)",
@@ -36,31 +37,40 @@ export const exportProductsToCSV = async (products: Product[], filename: string 
     // Convert products to CSV rows with complete data
     const csvRows = [
       headers.join(","), // Header row
-      ...completeProducts.map(product => [
-        `"${product.id || ""}"`,
-        `"${(product.product_name_sv || product.product_name || "").replace(/"/g, '""')}"`,
-        `"${(product.brands || "").replace(/"/g, '""')}"`,
-        `"${(product.categories || "").replace(/"/g, '""')}"`,
-        `"${(product.ingredients_text_sv || product.ingredients_text || "").replace(/"/g, '""')}"`,
-        `"${product.nutriscore_grade || ""}"`,
-        `"${product.ecoscore_grade || ""}"`,
-        `"${product.nova_group || ""}"`,
-        `"${product.energy_100g || ""}"`,
-        `"${product.energy_kcal_100g || ""}"`,
-        `"${product.fat_100g || ""}"`,
-        `"${product.saturated_fat_100g || ""}"`,
-        `"${product.carbohydrates_100g || ""}"`,
-        `"${product.sugars_100g || ""}"`,
-        `"${product.fiber_100g || ""}"`,
-        `"${product.proteins_100g || ""}"`,
-        `"${product.salt_100g || ""}"`,
-        `"${product.serving_size || ""}"`,
-        `"${product.package_weight || ""}"`,
-        `"${product.pieces_per_package || ""}"`,
-        `"${product.countries || ""}"`,
-        `"${(product.packaging || "").replace(/"/g, '""')}"`,
-        `"${(product.quantity || "").replace(/"/g, '""')}"`
-      ].join(","))
+      ...completeProducts.map(product => {
+        const { customCategory } = detectProductCategory(
+          product.product_name || product.product_name_sv,
+          product.categories,
+          product.brands
+        );
+        
+        return [
+          `"${product.id || ""}"`,
+          `"${(product.product_name_sv || product.product_name || "").replace(/"/g, '""')}"`,
+          `"${(product.brands || "").replace(/"/g, '""')}"`,
+          `"${customCategory}"`,
+          `"${(product.categories || "").replace(/"/g, '""')}"`,
+          `"${(product.ingredients_text_sv || product.ingredients_text || "").replace(/"/g, '""')}"`,
+          `"${product.nutriscore_grade || ""}"`,
+          `"${product.ecoscore_grade || ""}"`,
+          `"${product.nova_group || ""}"`,
+          `"${product.energy_100g || ""}"`,
+          `"${product.energy_kcal_100g || ""}"`,
+          `"${product.fat_100g || ""}"`,
+          `"${product.saturated_fat_100g || ""}"`,
+          `"${product.carbohydrates_100g || ""}"`,
+          `"${product.sugars_100g || ""}"`,
+          `"${product.fiber_100g || ""}"`,
+          `"${product.proteins_100g || ""}"`,
+          `"${product.salt_100g || ""}"`,
+          `"${product.serving_size || ""}"`,
+          `"${product.package_weight || ""}"`,
+          `"${product.pieces_per_package || ""}"`,
+          `"${product.countries || ""}"`,
+          `"${(product.packaging || "").replace(/"/g, '""')}"`,
+          `"${(product.quantity || "").replace(/"/g, '""')}"`
+        ].join(",");
+      })
     ];
     
     // Create CSV content
