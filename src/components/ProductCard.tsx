@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { calculateProductSmartPoints } from "@/utils/smartPointsCalculator";
+import { detectProductCategory } from "@/utils/productCategories";
 
 export interface Product {
   id: string;
@@ -103,47 +104,35 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     }
   }
 
-  // Analyze product category and determine special measurements
-  const analyzeProductCategory = (categoriesTags: string[] = []) => {
-    const beverageTags = ['beverages', 'carbonated-drinks', 'sodas', 'colas', 'juices', 'waters', 'plant-milks', 'energy-drinks', 'coffees', 'teas', 'beers', 'wines'];
-    const sauceTags = ['sauces', 'condiments', 'mayonnaises', 'ketchups', 'mustards', 'dressings', 'jams', 'marmalades', 'honeys', 'oils', 'vinegars', 'syrups', 'pestos'];
-    const dairyTags = ['dairies', 'cheese', 'cheeses', 'yogurt', 'yogurts', 'cream', 'creams', 'butter', 'butters', 'margarine', 'margarines', 'cottage-cheese', 'cottage-cheeses', 'fermented-milk', 'fermented-milks', 'fermented-milk-product', 'fermented-milk-products', 'fermented-cream', 'fermented-creams', 'sour-cream', 'sour-creams', 'plant-based-yogurt', 'plant-based-yogurts'];
-    
-    const normalizedTags = categoriesTags.map(tag => tag.toLowerCase().replace(/_/g, '-'));
-    
-    const isBeverage = normalizedTags.some(tag => beverageTags.some(bt => tag.includes(bt)));
-    const isSauce = normalizedTags.some(tag => sauceTags.some(st => tag.includes(st)));
-    const isDairy = normalizedTags.some(tag => dairyTags.some(dt => tag.includes(dt)));
-    
-    let category = 'Övrig produkt';
-    let explanation = 'Produkten matchar inte våra specifika kategoriregler för drycker, såser eller mejeriprodukter.';
-    let specialMeasurements = {
+  // Determine special measurements based on product category
+  const getSpecialMeasurements = (category: string) => {
+    const specialMeasurements = {
       glas: false,
       tsk: false,
       msk: false
     };
-    
-    if (isBeverage) {
-      category = 'Dryck';
-      explanation = 'Produkten identifierades som dryck baserat på kategorier som innehåller: ' + beverageTags.filter(tag => normalizedTags.some(nt => nt.includes(tag))).join(', ');
-      specialMeasurements.glas = true;
-    } else if (isSauce) {
-      category = 'Såser/Tillbehör';
-      explanation = 'Produkten identifierades som såser/tillbehör baserat på kategorier som innehåller: ' + sauceTags.filter(tag => normalizedTags.some(nt => nt.includes(tag))).join(', ');
-      specialMeasurements.tsk = true;
-      specialMeasurements.msk = true;
-    } else if (isDairy) {
-      category = 'Mejeri/Pålägg';
-      explanation = 'Produkten identifierades som mejeri/pålägg baserat på kategorier som innehåller: ' + dairyTags.filter(tag => normalizedTags.some(nt => nt.includes(tag))).join(', ');
-      specialMeasurements.tsk = true;
-      specialMeasurements.msk = true;
+
+    switch (category) {
+      case 'Dryck':
+      case 'Kaffe':
+        specialMeasurements.glas = true;
+        break;
+      case 'Pålägg':
+      case 'Mejeri':
+        specialMeasurements.tsk = true;
+        specialMeasurements.msk = true;
+        break;
+      default:
+        // No special measurements for other categories
+        break;
     }
-    
-    return { category, explanation, specialMeasurements };
+
+    return specialMeasurements;
   };
 
-  // Analyze product category
-  const categoryAnalysis = analyzeProductCategory(product.categories?.split(',').map(tag => tag.trim()) ?? []);
+  // Get product category using the centralized function
+  const category = detectProductCategory(product.product_name, product.categories, product.brands);
+  const specialMeasurements = getSpecialMeasurements(category);
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
@@ -228,33 +217,33 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                      </span>
                   </div>
 
-                  {/* Special measurements - always show */}
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${categoryAnalysis.specialMeasurements.glas && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {categoryAnalysis.specialMeasurements.glas && smartPoints ? Math.round((smartPoints.per100g * 200) / 100) : '-'}
-                    </Badge>
-                    <span className={categoryAnalysis.specialMeasurements.glas ? '' : 'text-muted-foreground'}>
-                      <strong>1 glas:</strong> 2 dl
-                    </span>
-                  </div>
+                   {/* Special measurements - always show */}
+                   <div className="flex items-center gap-2">
+                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.glas && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       {specialMeasurements.glas && smartPoints ? Math.round((smartPoints.per100g * 200) / 100) : '-'}
+                     </Badge>
+                     <span className={specialMeasurements.glas ? '' : 'text-muted-foreground'}>
+                       <strong>1 glas:</strong> 2 dl
+                     </span>
+                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${categoryAnalysis.specialMeasurements.tsk && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {categoryAnalysis.specialMeasurements.tsk && smartPoints ? Math.round((smartPoints.per100g * 5) / 100) : '-'}
-                    </Badge>
-                    <span className={categoryAnalysis.specialMeasurements.tsk ? '' : 'text-muted-foreground'}>
-                      <strong>1 tsk:</strong> 5 ml
-                    </span>
-                  </div>
+                   <div className="flex items-center gap-2">
+                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.tsk && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       {specialMeasurements.tsk && smartPoints ? Math.round((smartPoints.per100g * 5) / 100) : '-'}
+                     </Badge>
+                     <span className={specialMeasurements.tsk ? '' : 'text-muted-foreground'}>
+                       <strong>1 tsk:</strong> 5 ml
+                     </span>
+                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${categoryAnalysis.specialMeasurements.msk && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {categoryAnalysis.specialMeasurements.msk && smartPoints ? Math.round((smartPoints.per100g * 15) / 100) : '-'}
-                    </Badge>
-                    <span className={categoryAnalysis.specialMeasurements.msk ? '' : 'text-muted-foreground'}>
-                      <strong>1 msk:</strong> 15 ml
-                    </span>
-                  </div>
+                   <div className="flex items-center gap-2">
+                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.msk && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       {specialMeasurements.msk && smartPoints ? Math.round((smartPoints.per100g * 15) / 100) : '-'}
+                     </Badge>
+                     <span className={specialMeasurements.msk ? '' : 'text-muted-foreground'}>
+                       <strong>1 msk:</strong> 15 ml
+                     </span>
+                   </div>
                 </div>
               </div>
             </>
@@ -266,11 +255,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 <h4 className="font-semibold mb-2 text-foreground">Produktkategori</h4>
                 <div className="space-y-2">
                   <Badge variant="secondary" className="bg-fresh-green/20 text-fresh-green border-fresh-green/30">
-                    {categoryAnalysis.category}
+                    {category}
                   </Badge>
-                  <p className="text-xs text-warm-neutral">
-                    {categoryAnalysis.explanation}
-                  </p>
                 </div>
               </div>
             </>
