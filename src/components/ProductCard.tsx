@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { calculateProductSmartPoints } from "@/utils/smartPointsCalculator";
+import { calculateProductEnergyScore } from "@/utils/energyScoreCalculator";
 import { detectProductCategory } from "@/utils/productCategories";
 
 export interface Product {
@@ -85,8 +85,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   const imageUrl = product.image_front_url || product.image_url;
   const categories = product.categories?.split(',').slice(0, 3) || [];
   
-  // Calculate SmartPoints with alignment logic for portion and piece sizes
-  const smartPoints = calculateProductSmartPoints(
+  // Calculate energy score with alignment logic for portion and piece sizes
+  const energyScore = calculateProductEnergyScore(
     product.energy_100g,
     product.saturated_fat_100g,
     product.sugars_100g,
@@ -182,7 +182,7 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
           {/* Product Details */}
           <div className="flex-1 space-y-4">
-            {/* SmartPoints & Measurements */}
+            {/* Energy Score & Measurements */}
             <>
               <Separator />
               <div>
@@ -190,16 +190,16 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                 <div className="space-y-1 text-sm">
                   {/* 100g - always show */}
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`px-3 py-1 ${smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      <span className="text-xl font-bold">{smartPoints?.per100g || '-'}</span>
-                      <span className="text-sm ml-1">/ 100g</span>
+                     <Badge variant="outline" className={`px-3 py-1 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       <span className="text-xl font-bold">{energyScore?.per100g || '-'}</span>
+                       <span className="text-sm ml-1 font-normal">eS / 100g</span>
                     </Badge>
                   </div>
 
                   {/* Package */}
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${product.package_weight && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {product.package_weight && smartPoints ? Math.round((smartPoints.per100g * product.package_weight) / 100) : '-'}
+                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${product.package_weight && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       {product.package_weight && energyScore ? Math.round((energyScore.per100g * product.package_weight) / 100) : '-'} eS
                     </Badge>
                     <span className={product.package_weight ? '' : 'text-muted-foreground'}>
                       <strong>Förpackning:</strong> {product.package_weight ? `${Math.round(product.package_weight)}g` : 'Ej tillgänglig'}
@@ -208,8 +208,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
                   {/* Piece */}
                    <div className="flex items-center gap-2">
-                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${smartPoints?.perPiece && product.pieces_per_package !== 1 ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                       {smartPoints?.perPiece || '-'}
+                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore?.perPiece && product.pieces_per_package !== 1 ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                        {energyScore?.perPiece || '-'} eS
                      </Badge>
                      <span className={product.pieces_per_package && product.package_weight && product.pieces_per_package !== 1 ? '' : 'text-muted-foreground'}>
                        <strong>Styck:</strong> {product.pieces_per_package && product.package_weight 
@@ -221,8 +221,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
                   {/* Serving */}
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs px-2 py-0.5 ${smartPoints?.perServing ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                      {smartPoints?.perServing || '-'}
+                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore?.perServing ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                       {energyScore?.perServing || '-'} eS
                     </Badge>
                      <span className={alignedServingSize ? '' : 'text-muted-foreground'}>
                        <strong>Portion:</strong> {alignedServingSize ? `${Math.round(alignedServingSize)}g` : 'Ej tillgänglig'}
@@ -231,8 +231,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
                    {/* Special measurements - always show */}
                    <div className="flex items-center gap-2">
-                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.glas && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                       {specialMeasurements.glas && smartPoints ? Math.round((smartPoints.per100g * 200) / 100) : '-'}
+                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.glas && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                        {specialMeasurements.glas && energyScore ? Math.round((energyScore.per100g * 200) / 100) : '-'} eS
                      </Badge>
                      <span className={specialMeasurements.glas ? '' : 'text-muted-foreground'}>
                        <strong>1 glas:</strong> 2 dl
@@ -240,8 +240,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                    </div>
 
                    <div className="flex items-center gap-2">
-                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.tsk && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                       {specialMeasurements.tsk && smartPoints ? Math.round((smartPoints.per100g * 5) / 100) : '-'}
+                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.tsk && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                        {specialMeasurements.tsk && energyScore ? Math.round((energyScore.per100g * 5) / 100) : '-'} eS
                      </Badge>
                      <span className={specialMeasurements.tsk ? '' : 'text-muted-foreground'}>
                        <strong>1 tsk:</strong> 5 ml
@@ -249,8 +249,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                    </div>
 
                    <div className="flex items-center gap-2">
-                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.msk && smartPoints ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                       {specialMeasurements.msk && smartPoints ? Math.round((smartPoints.per100g * 15) / 100) : '-'}
+                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.msk && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                        {specialMeasurements.msk && energyScore ? Math.round((energyScore.per100g * 15) / 100) : '-'} eS
                      </Badge>
                      <span className={specialMeasurements.msk ? '' : 'text-muted-foreground'}>
                        <strong>1 msk:</strong> 15 ml

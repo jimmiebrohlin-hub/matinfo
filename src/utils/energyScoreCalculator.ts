@@ -1,17 +1,17 @@
-export interface SmartPointsCalculation {
+export interface EnergyScoreCalculation {
   per100g: number;
   perPackage?: number;
   perServing?: number;
   perPiece?: number;
 }
 
-export function calculateSmartPoints(
+export function calculateEnergyScore(
   calories: number,
   saturatedFat: number,
   sugar: number,
   protein: number
 ): number {
-  // WW SmartPoints formula (approximate)
+  // Energy score formula (approximate)
   // Base points from calories
   const caloriePoints = calories / 33;
   
@@ -30,7 +30,7 @@ export function calculateSmartPoints(
   return Math.max(0, Math.round(totalPoints));
 }
 
-export function calculateProductSmartPoints(
+export function calculateProductEnergyScore(
   energy100g?: number,
   saturatedFat100g?: number,
   sugars100g?: number,
@@ -38,14 +38,14 @@ export function calculateProductSmartPoints(
   servingSize?: number,
   packageWeight?: number,
   piecesPerPack?: number
-): SmartPointsCalculation | null {
+): EnergyScoreCalculation | null {
   // Need at least calories to calculate
   if (!energy100g) return null;
   
   // Convert kJ to kcal if needed (assuming energy is in kJ)
   const calories100g = energy100g / 4.184;
   
-  const per100g = calculateSmartPoints(
+  const per100g = calculateEnergyScore(
     calories100g,
     saturatedFat100g || 0,
     sugars100g || 0,
@@ -55,7 +55,7 @@ export function calculateProductSmartPoints(
   let perPackage: number | undefined;
   if (packageWeight) {
     const packageMultiplier = packageWeight / 100;
-    perPackage = calculateSmartPoints(
+    perPackage = calculateEnergyScore(
       calories100g * packageMultiplier,
       (saturatedFat100g || 0) * packageMultiplier,
       (sugars100g || 0) * packageMultiplier,
@@ -66,7 +66,7 @@ export function calculateProductSmartPoints(
   let perServing: number | undefined;
   if (servingSize) {
     const servingMultiplier = servingSize / 100;
-    perServing = calculateSmartPoints(
+    perServing = calculateEnergyScore(
       calories100g * servingMultiplier,
       (saturatedFat100g || 0) * servingMultiplier,
       (sugars100g || 0) * servingMultiplier,
@@ -78,7 +78,7 @@ export function calculateProductSmartPoints(
   if (piecesPerPack && packageWeight) {
     const pieceWeight = packageWeight / piecesPerPack;
     const pieceMultiplier = pieceWeight / 100;
-    perPiece = calculateSmartPoints(
+    perPiece = calculateEnergyScore(
       calories100g * pieceMultiplier,
       (saturatedFat100g || 0) * pieceMultiplier,
       (sugars100g || 0) * pieceMultiplier,
