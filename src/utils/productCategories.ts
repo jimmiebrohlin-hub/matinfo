@@ -46,9 +46,10 @@ function normalizeText(text: string): string {
 
 function containsKeyword(text: string, keywords: string[]): boolean {
   const normalizedText = normalizeText(text);
-  return keywords.some(keyword => 
-    normalizedText.includes(normalizeText(keyword))
-  );
+    return keywords.some(keyword => {
+      const normalizedKeyword = normalizeText(keyword);
+      return normalizedText.includes(normalizedKeyword);
+    });
 }
 
 function containsExclusion(text: string, exclusions: string[]): boolean {
@@ -132,7 +133,7 @@ export function detectProductCategory(
 
   // 2. Identify Krämigt & Bredbart (Spoonable & Spreads)
   const kramiktKeywords = [
-    'yoghurt', 'kvarg', 'keso', 'crème fraîche', 'creme fraiche', 'gräddfil', 
+    'yoghurt', 'kvarg', 'keso', 'cottage cheese', 'crème fraîche', 'creme fraiche', 'gräddfil', 
     'färskost', 'smör', 'margarin', 'leverpastej', 'pastej', 'bredbar', 
     'majonnäs', 'remoulad', 'dressing', 'ketchup', 'senap', 'sås', 'fond', 
     'buljong', 'sylt', 'marmelad', 'honung', 'spread', 'pate', 'sauce', 
@@ -140,7 +141,7 @@ export function detectProductCategory(
   ];
   const kramiktCategoryStrings = [
     'en:spreads', 'en:yogurts', 'en:fermented-milk-products', 
-    'en:sauces', 'en:condiments'
+    'en:sauces', 'en:condiments', 'en:cottage-cheeses', 'en:fresh-cheeses'
   ];
 
   if (containsKeyword(searchText, kramiktKeywords) || 
@@ -164,10 +165,11 @@ export function detectProductCategory(
 
   // 4. Identify Pålägg (skivat) (Sliced Cold Cuts)
   const palaggKeywords = [
-    'skinka', 'salami', 'kalkon', 'rostbiff', 'korv', 'ham', 'turkey', 'prosciutto'
+    'skinka', 'salami', 'kalkon', 'rostbiff', 'korv', 'ham', 'turkey', 'prosciutto',
+    'kycklingbröst', 'kycklingbrōst', 'kycklingfilé', 'grillad kyckling', 'chicken breast'
   ];
-  const palaggCategoryStrings = ['en:cold-cuts', 'en:salamis'];
-  const palaggExclusions = ['leverpastej', 'pastej', 'bredbar'];
+  const palaggCategoryStrings = ['en:cold-cuts', 'en:salamis', 'en:chickens', 'en:poultries'];
+  const palaggExclusions = ['leverpastej', 'pastej', 'bredbar', 'köttbullar', 'färs'];
 
   if (!containsExclusion(searchText, palaggExclusions) && 
       (containsKeyword(searchText, palaggKeywords) || 
@@ -177,10 +179,10 @@ export function detectProductCategory(
 
   // 5. Identify Bröd (Bread)
   const brodKeywords = [
-    'bröd', 'limpa', 'knäckebröd', 'tunnbröd', 'formfranska', 'rågbröd', 
-    'surdegsbröd', 'frökusar', 'rågkusar', 'rågkaka', 'bread', 'loaf', 'crispbread'
+    'bröd', 'limpa', 'knäckebröd', 'tunnbröd', 'formfranska', 'jättefranska', 'rågbröd', 
+    'surdegsbröd', 'frökusar', 'rågkusar', 'rågkaka', 'bread', 'loaf', 'crispbread', 'franska'
   ];
-  const brodCategoryStrings = ['en:breads', 'en:crispbreads'];
+  const brodCategoryStrings = ['en:breads', 'en:crispbreads', 'en:baguettes', 'en:sliced breads'];
 
   if (containsKeyword(searchText, brodKeywords) || 
       containsCategoryString(searchText, brodCategoryStrings)) {
@@ -189,7 +191,7 @@ export function detectProductCategory(
 
   // 6. Identify Torrvara (volym) (Dry Goods by Volume)
   const torrvaraVolymKeywords = [
-    'mjöl', 'socker', 'gryn', 'kakao', 'panko', 'ströbröd', 'flingor', 
+    'mjöl', 'vetemjöl', 'rågmjöl', 'graham mjöl', 'socker', 'gryn', 'kakao', 'panko', 'ströbröd', 'flingor', 
     'müsli', 'flour', 'sugar'
   ];
   const torrvaraVolymExclusions = ['gröt', 'kaka', 'kex', 'bulle', 'choklad'];
@@ -210,7 +212,7 @@ export function detectProductCategory(
 
   // 7. Identify Torrvara (sväller vid kokning) (Dry Goods - Swells When Cooked)
   const torrvaraSwellKeywords = [
-    'pasta', 'spaghetti', 'makaroner', 'nudlar', 'ris', 'bulgur', 'couscous', 
+    'pasta', 'spaghetti', 'makaroner', 'nudlar', 'spirali', 'ris', 'bulgur', 'couscous', 
     'quinoa', 'linser', 'bönor'
   ];
   const torrvaraSwellExclusions = [

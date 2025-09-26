@@ -284,15 +284,14 @@ export class OpenFoodFactsService {
    */
   static async searchProductsByText(searchText: string): Promise<Product[]> {
     try {
-      // Improved search without overly restrictive filtering
+      // Search like Open Food Facts web interface with proper sorting
       const searchParams = new URLSearchParams({
         search_terms: searchText,
         search_simple: "1",
         action: "process",
-        page_size: "20",
-        // Remove Sweden restriction for better variety in text search
-        // Add random sort component for more varied results
-        sort_by: Math.random() > 0.5 ? "popularity_key" : "last_modified_t",
+        page_size: "50", // Show at least 50 products per page as requested
+        sort_by: "unique_scans_n", // Sort by popularity/scan count like OFF web interface
+        page: "1",
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
       });
 

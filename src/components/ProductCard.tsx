@@ -48,7 +48,6 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   const [isNutritionOpen, setIsNutritionOpen] = useState(false);
   const [isIngredientsOpen, setIsIngredientsOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [isScoresOpen, setIsScoresOpen] = useState(false);
   if (isLoading) {
     return (
       <Card className="w-full max-w-2xl mx-auto shadow-card bg-gradient-card backdrop-blur-sm animate-pulse">
@@ -138,7 +137,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   };
 
   // Get product category using the centralized function
-  const { customCategory } = detectProductCategory(product.product_name, product.categories, product.brands);
+  const categoryResult = detectProductCategory(product.product_name, product.categories, product.brands);
+  const { customCategory, conversionData } = categoryResult;
   const specialMeasurements = getSpecialMeasurements(customCategory);
 
   return (
@@ -196,66 +196,135 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                     </Badge>
                   </div>
 
-                  {/* Package */}
-                  <div className="flex items-center gap-2">
-                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${product.package_weight && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                       {product.package_weight && energyScore ? Math.round((energyScore.per100g * product.package_weight) / 100) : '-'} eS
-                    </Badge>
-                    <span className={product.package_weight ? '' : 'text-muted-foreground'}>
-                      <strong>Förpackning:</strong> {product.package_weight ? `${Math.round(product.package_weight)}g` : 'Ej tillgänglig'}
-                    </span>
-                  </div>
+                   {/* Package - only show if available */}
+                   {product.package_weight && (
+                     <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                          {energyScore ? Math.round((energyScore.per100g * product.package_weight) / 100) : '-'} eS
+                       </Badge>
+                       <span>
+                         <strong>Förpackning:</strong> {Math.round(product.package_weight)}g
+                       </span>
+                     </div>
+                   )}
 
-                  {/* Piece */}
-                   <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore?.perPiece && product.pieces_per_package !== 1 ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                        {energyScore?.perPiece || '-'} eS
-                     </Badge>
-                     <span className={product.pieces_per_package && product.package_weight && product.pieces_per_package !== 1 ? '' : 'text-muted-foreground'}>
-                       <strong>Styck:</strong> {product.pieces_per_package && product.package_weight 
-                         ? `${Math.round(product.package_weight / product.pieces_per_package)}g (${product.pieces_per_package} st)`
-                         : 'Ej tillgänglig'
-                       }
-                     </span>
-                   </div>
+                   {/* Piece - only show if more than 1 piece */}
+                   {product.pieces_per_package && product.package_weight && product.pieces_per_package !== 1 && (
+                     <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore?.perPiece ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                          {energyScore?.perPiece || '-'} eS
+                       </Badge>
+                       <span>
+                         <strong>Styck:</strong> {Math.round(product.package_weight / product.pieces_per_package)}g ({product.pieces_per_package} st)
+                       </span>
+                     </div>
+                   )}
 
-                  {/* Serving */}
-                  <div className="flex items-center gap-2">
-                     <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore?.perServing ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                       {energyScore?.perServing || '-'} eS
-                    </Badge>
-                     <span className={alignedServingSize ? '' : 'text-muted-foreground'}>
-                       <strong>Portion:</strong> {alignedServingSize ? `${Math.round(alignedServingSize)}g` : 'Ej tillgänglig'}
-                     </span>
-                  </div>
+                   {/* Serving - only show if available */}
+                   {alignedServingSize && (
+                     <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore?.perServing ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                          {energyScore?.perServing || '-'} eS
+                       </Badge>
+                        <span>
+                          <strong>Portion:</strong> {Math.round(alignedServingSize)}g
+                        </span>
+                     </div>
+                   )}
 
-                   {/* Special measurements - always show */}
-                   <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.glas && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                        {specialMeasurements.glas && energyScore ? Math.round((energyScore.per100g * 200) / 100) : '-'} eS
-                     </Badge>
-                     <span className={specialMeasurements.glas ? '' : 'text-muted-foreground'}>
-                       <strong>1 glas:</strong> 2 dl
-                     </span>
-                   </div>
+                    {/* Category-specific measurements */}
+                    
+                    {/* 1 glas (2 dl) - for Dryck */}
+                    {(customCategory === 'Dryck' || specialMeasurements.glas) && (
+                      <div className="flex items-center gap-2">
+                         <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                           {energyScore ? Math.round((energyScore.per100g * 200) / 100) : '-'} eS
+                        </Badge>
+                        <span>
+                          <strong>1 glas:</strong> 2 dl
+                        </span>
+                      </div>
+                    )}
 
-                   <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.tsk && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                        {specialMeasurements.tsk && energyScore ? Math.round((energyScore.per100g * 5) / 100) : '-'} eS
-                     </Badge>
-                     <span className={specialMeasurements.tsk ? '' : 'text-muted-foreground'}>
-                       <strong>1 tsk:</strong> 5 ml
-                     </span>
-                   </div>
+                    {/* 1 tsk/msk - for Krämigt & Bredbart */}
+                    {(customCategory === 'Krämigt & Bredbart' || specialMeasurements.tsk) && (
+                      <>
+                        <div className="flex items-center gap-2">
+                           <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                             {energyScore ? Math.round((energyScore.per100g * 5) / 100) : '-'} eS
+                          </Badge>
+                          <span>
+                            <strong>1 tsk:</strong> 5g
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                             {energyScore ? Math.round((energyScore.per100g * 15) / 100) : '-'} eS
+                          </Badge>
+                          <span>
+                            <strong>1 msk:</strong> 15g
+                          </span>
+                        </div>
+                      </>
+                    )}
 
-                   <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-xs px-2 py-0.5 ${specialMeasurements.msk && energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                        {specialMeasurements.msk && energyScore ? Math.round((energyScore.per100g * 15) / 100) : '-'} eS
-                     </Badge>
-                     <span className={specialMeasurements.msk ? '' : 'text-muted-foreground'}>
-                       <strong>1 msk:</strong> 15 ml
-                     </span>
-                   </div>
+                    {/* 1 skiva - for Bröd (30g), Ost (10g), Pålägg (8g) */}
+                    {customCategory === 'Bröd' && (
+                      <div className="flex items-center gap-2">
+                         <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                           {energyScore ? Math.round((energyScore.per100g * 30) / 100) : '-'} eS
+                        </Badge>
+                        <span>
+                          <strong>1 skiva:</strong> 30g
+                        </span>
+                      </div>
+                    )}
+
+                    {customCategory === 'Ost' && (
+                      <div className="flex items-center gap-2">
+                         <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                           {energyScore ? Math.round((energyScore.per100g * 10) / 100) : '-'} eS
+                        </Badge>
+                        <span>
+                          <strong>1 skiva:</strong> 10g
+                        </span>
+                      </div>
+                    )}
+
+                    {customCategory === 'Pålägg (skivat)' && (
+                      <div className="flex items-center gap-2">
+                         <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                           {energyScore ? Math.round((energyScore.per100g * 8) / 100) : '-'} eS
+                        </Badge>
+                        <span>
+                          <strong>1 skiva:</strong> 8g
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 1 dl conversion - for Torrvara (volym) */}
+                    {conversionData && conversionData.type === 'volume' && (
+                      <div className="flex items-center gap-2">
+                         <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                           {energyScore ? Math.round((energyScore.per100g * conversionData.factor) / 100) : '-'} eS
+                        </Badge>
+                        <span>
+                          <strong>1 dl:</strong> {conversionData.factor}g
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 1 dl kokt - for Torrvara (sväller vid kokning) */}
+                    {conversionData && conversionData.type === 'swelling' && (
+                      <div className="flex items-center gap-2">
+                         <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                           {energyScore ? Math.round((energyScore.per100g * 100) / (100 * conversionData.factor)) : '-'} eS
+                        </Badge>
+                        <span>
+                          <strong>1 dl kokt:</strong> ca {Math.round(100 / conversionData.factor)}g torrvaror (Svällfaktor: {conversionData.factor}x)
+                        </span>
+                      </div>
+                    )}
                 </div>
               </div>
             </>
@@ -387,36 +456,6 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
               </>
             )}
 
-            {/* Grades - Collapsible */}
-            {(product.nutriscore_grade || product.ecoscore_grade) && (
-              <>
-                <Separator />
-                <Collapsible open={isScoresOpen} onOpenChange={setIsScoresOpen}>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
-                    <h4 className="font-semibold text-foreground">Betyg</h4>
-                    {isScoresOpen ? (
-                      <ChevronDown className="h-4 w-4 text-warm-neutral" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-warm-neutral" />
-                    )}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-2">
-                    <div className="flex gap-3">
-                      {product.nutriscore_grade && (
-                        <Badge variant="outline" className="border-warm-yellow text-warm-yellow">
-                          Nutri-Score: {product.nutriscore_grade.toUpperCase()}
-                        </Badge>
-                      )}
-                      {product.ecoscore_grade && (
-                        <Badge variant="outline" className="border-fresh-green text-fresh-green">
-                          Eco-Score: {product.ecoscore_grade.toUpperCase()}
-                        </Badge>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </>
-            )}
           </div>
         </div>
       </CardContent>
