@@ -37,11 +37,10 @@ const SWELLING_FACTORS: { [key: string]: number } = {
 };
 
 function normalizeText(text: string): string {
-  return text.toLowerCase()
-    .replace(/å/g, 'a')
-    .replace(/ä/g, 'a')
-    .replace(/ö/g, 'o')
-    .replace(/é/g, 'e');
+  // Use NFKD Unicode normalization to strip diacritics properly
+  return text.normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks
+    .toLowerCase();
 }
 
 function containsKeyword(text: string, keywords: string[]): boolean {
@@ -137,7 +136,7 @@ export function detectProductCategory(
     'färskost', 'smör', 'margarin', 'leverpastej', 'pastej', 'bredbar', 
     'majonnäs', 'remoulad', 'dressing', 'ketchup', 'senap', 'sås', 'fond', 
     'buljong', 'sylt', 'marmelad', 'honung', 'spread', 'pate', 'sauce', 
-    'mayonnaise', 'yogurt', 'quark'
+    'mayonnaise', 'yogurt', 'quark', 'creme', 'käse'
   ];
   const kramiktCategoryStrings = [
     'en:spreads', 'en:yogurts', 'en:fermented-milk-products', 

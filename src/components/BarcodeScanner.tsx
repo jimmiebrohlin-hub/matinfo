@@ -48,34 +48,90 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
         }
       };
       
-      // Apply slight zoom for better detection
+      // Apply 3x zoom for better detection as requested
       if (videoRef.current) {
         videoRef.current.style.transform = 'scale(3)';
         videoRef.current.style.transformOrigin = 'center center';
       }
       
-      // Enhanced scanning with multiple decode attempts and rotation handling
+      // Enhanced scanning with rotation handling and multiple decode attempts
       const decodeOptions = {
         tryHarder: true,
         multiple: false,
-        // Improved formats for better EAN detection
+        // Comprehensive format support for better EAN detection
         possibleFormats: [
           'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39',
-          'ITF', 'CODABAR', 'RSS_14', 'RSS_EXPANDED'
+          'ITF', 'CODABAR', 'RSS_14', 'RSS_EXPANDED', 'QR_CODE', 'DATA_MATRIX'
         ]
       };
       
-      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+      // Enhanced decoding with rotation handling
+      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, async (result, error) => {
         if (result) {
           const barcodeText = result.getText();
           // Validate EAN format (should be numeric and proper length)
           if (/^\d{8,14}$/.test(barcodeText)) {
             console.log(`📷 Valid barcode detected: ${barcodeText}`);
             handleBarcodeDetected(barcodeText);
+            return;
           } else {
             console.log(`📷 Invalid barcode format: ${barcodeText}`);
           }
         }
+        
+        // If standard detection fails, try rotation handling
+        if (error && videoRef.current && codeReader.current) {
+          try {
+            // Capture current video frame for rotation attempts
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              canvas.width = videoRef.current.videoWidth;
+              canvas.height = videoRef.current.videoHeight;
+              ctx.drawImage(videoRef.current, 0, 0);
+              
+              // Try different rotations: 90, 180, 270 degrees
+              const rotations = [90, 180, 270];
+              for (const angle of rotations) {
+                try {
+                  const rotatedCanvas = document.createElement('canvas');
+                  const rotatedCtx = rotatedCanvas.getContext('2d');
+                  if (rotatedCtx) {
+                    // Set canvas dimensions based on rotation
+                    if (angle === 90 || angle === 270) {
+                      rotatedCanvas.width = canvas.height;
+                      rotatedCanvas.height = canvas.width;
+                    } else {
+                      rotatedCanvas.width = canvas.width;
+                      rotatedCanvas.height = canvas.height;
+                    }
+                    
+                    // Apply rotation transformation
+                    rotatedCtx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+                    rotatedCtx.rotate((angle * Math.PI) / 180);
+                    rotatedCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+                    
+                    // Try to decode rotated image
+                    const rotatedResult = await codeReader.current.decodeFromImageUrl(rotatedCanvas.toDataURL());
+                    if (rotatedResult) {
+                      const rotatedBarcodeText = rotatedResult.getText();
+                      if (/^\d{8,14}$/.test(rotatedBarcodeText)) {
+                        console.log(`📷 Valid barcode detected at ${angle}° rotation: ${rotatedBarcodeText}`);
+                        handleBarcodeDetected(rotatedBarcodeText);
+                        return;
+                      }
+                    }
+                  }
+                } catch (rotationError) {
+                  // Silently continue to next rotation
+                }
+              }
+            }
+          } catch (frameError) {
+            // Silently handle frame capture errors
+          }
+        }
+        
         // Suppress most scanning errors to reduce console noise
         if (error && !['NotFoundException', 'ChecksumException', 'FormatException'].includes(error.name)) {
           console.warn('Scanner error:', error.name);

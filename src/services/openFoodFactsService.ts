@@ -284,21 +284,20 @@ export class OpenFoodFactsService {
    */
   static async searchProductsByText(searchText: string): Promise<Product[]> {
     try {
-      // Search like Open Food Facts web interface with proper sorting
+      // Use the exact same search approach as OFF web interface
       const searchParams = new URLSearchParams({
-        search_terms: searchText,
-        search_simple: "1",
-        action: "process",
-        page_size: "50", // Show at least 50 products per page as requested
-        sort_by: "unique_scans_n", // Sort by popularity/scan count like OFF web interface
+        search_terms: searchText.trim(),
+        sort_by: "unique_scans_n", // Sort by popularity (scan count) like OFF web interface
+        page_size: "50", // Show at least 50 products per page
         page: "1",
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
       });
 
       console.log(`🔍 Searching for products with text: "${searchText}"`);
-      console.log(`📍 Search URL: ${BASE_URL}/api/v2/search?${searchParams}`);
+      console.log(`📍 Search URL: ${BASE_URL}/cgi/search.pl?${searchParams}`);
       
-      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
+      // Use the CGI endpoint like the web interface instead of API v2
+      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -307,38 +306,67 @@ export class OpenFoodFactsService {
       });
       
       if (!response.ok) {
-        console.log(`❌ API response not ok: ${response.status}`);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.log(`❌ CGI response not ok: ${response.status}, trying API v2 fallback...`);
+        
+        // Fallback to API v2 if CGI fails
+        const apiParams = new URLSearchParams({
+          search_terms: searchText.trim(),
+          search_simple: "1",
+          action: "process",
+          page_size: "50",
+          sort_by: "unique_scans_n",
+          page: "1",
+          fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
+        });
+        
+        const apiResponse = await fetch(`${BASE_URL}/api/v2/search?${apiParams}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'SvenskMatupptackaren/1.0'
+          }
+        });
+        
+        if (!apiResponse.ok) {
+          throw new Error(`HTTP error! status: ${apiResponse.status}`);
+        }
+        
+        const data = await apiResponse.json();
+        return this.processSearchResults(data, searchText);
       }
       
       const data = await response.json();
-      console.log(`📊 Text search response for "${searchText}":`, {
-        count: data.count,
-        products_found: data.products?.length || 0,
-        first_product: data.products?.[0]?.product_name || data.products?.[0]?.code
-      });
-
-      if (data && data.products && data.products.length > 0) {
-        const filteredProducts = data.products
-          .filter((product: any) => 
-            (product.product_name || product.product_name_en || product.product_name_sv) &&
-            (product.image_front_url || product.image_url) // Ensure we have images
-          )
-          .map((product: any) => this.normalizeProduct(product))
-          .filter((product: Product) => 
-            product.product_name && product.product_name.length > 0
-          );
-        
-        console.log(`✅ Filtered ${filteredProducts.length} products from ${data.products.length} results`);
-        return filteredProducts;
-      }
-      
-      console.log(`❌ No products found in API response for "${searchText}"`);
-      return [];
+      return this.processSearchResults(data, searchText);
     } catch (error) {
       console.error("Error searching products by text:", error);
       throw error;
     }
+  }
+
+  private static processSearchResults(data: any, searchText: string): Product[] {
+    console.log(`📊 Text search response for "${searchText}":`, {
+      count: data.count,
+      products_found: data.products?.length || 0,
+      first_product: data.products?.[0]?.product_name || data.products?.[0]?.code
+    });
+
+    if (data && data.products && data.products.length > 0) {
+      const filteredProducts = data.products
+        .filter((product: any) => 
+          (product.product_name || product.product_name_en || product.product_name_sv) &&
+          (product.image_front_url || product.image_url) // Ensure we have images
+        )
+        .map((product: any) => this.normalizeProduct(product))
+        .filter((product: Product) => 
+          product.product_name && product.product_name.length > 0
+        );
+      
+      console.log(`✅ Filtered ${filteredProducts.length} products from ${data.products.length} results`);
+      return filteredProducts;
+    }
+    
+    console.log(`❌ No products found in API response for "${searchText}"`);
+    return [];
   }
 
   /**
