@@ -339,7 +339,8 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
             {/* Mer info - Combined section */}
             {((product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) || 
               (product.ingredients_text_sv || product.ingredients_text) || 
-              categories.length > 0) && (
+              categories.length > 0 || 
+              (product.nutriscore_grade || product.ecoscore_grade || product.nova_group)) && (
               <>
                 <Separator />
                 <Collapsible open={isMoreInfoOpen} onOpenChange={setIsMoreInfoOpen}>
@@ -352,6 +353,30 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                     )}
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-4 space-y-4">
+                    
+                    {/* Betyg (Ratings) */}
+                    {(product.nutriscore_grade || product.ecoscore_grade || product.nova_group) && (
+                      <div>
+                        <h5 className="font-medium text-foreground mb-2">Betyg</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {product.nutriscore_grade && (
+                            <Badge variant="outline" className="bg-fresh-green/10 text-fresh-green border-fresh-green/30">
+                              Nutri-Score: {product.nutriscore_grade.toUpperCase()}
+                            </Badge>
+                          )}
+                          {product.ecoscore_grade && (
+                            <Badge variant="outline" className="bg-fresh-green/10 text-fresh-green border-fresh-green/30">
+                              Eco-Score: {product.ecoscore_grade.toUpperCase()}
+                            </Badge>
+                          )}
+                          {product.nova_group && (
+                            <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30">
+                              NOVA: {product.nova_group}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Nutrition Facts */}
                     {(product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) && (
@@ -427,6 +452,21 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                         </div>
                       </div>
                     )}
+                    
+                    {/* EAN + OFF Link */}
+                    <div className="pt-2 border-t border-border">
+                      <div className="flex items-center justify-between text-xs text-warm-neutral">
+                        <span>EAN: {product.id}</span>
+                        <a 
+                          href={`https://world.openfoodfacts.org/product/${product.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-warm-yellow hover:underline"
+                        >
+                          Visa på OpenFoodFacts →
+                        </a>
+                      </div>
+                    </div>
                     
                   </CollapsibleContent>
                 </Collapsible>
