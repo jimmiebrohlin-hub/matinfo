@@ -339,121 +339,121 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                     )}
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-4 space-y-4">
-                    
-                    {/* Betyg (Ratings) */}
-                    {(product.nutriscore_grade || product.ecoscore_grade || product.nova_group) && (
-                      <div>
-                        <h5 className="font-medium text-foreground mb-2">Betyg</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {product.nutriscore_grade && (
-                            <Badge variant="outline" className="bg-fresh-green/10 text-fresh-green border-fresh-green/30">
-                              Nutri-Score: {product.nutriscore_grade.toUpperCase()}
-                            </Badge>
-                          )}
-                          {product.ecoscore_grade && (
-                            <Badge variant="outline" className="bg-fresh-green/10 text-fresh-green border-fresh-green/30">
-                              Eco-Score: {product.ecoscore_grade.toUpperCase()}
-                            </Badge>
-                          )}
-                          {product.nova_group && (
-                            <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30">
-                              NOVA: {product.nova_group}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Nutrition Facts */}
-                    {(product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) && (
-                      <div>
-                        <h5 className="font-medium text-foreground mb-2">Näringsvärden (per 100g)</h5>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          {product.energy_100g && (
-                            <div className="flex justify-between">
-                              <span>Energi:</span>
-                              <span className="font-medium">{Math.round(product.energy_100g)} kJ ({Math.round(product.energy_100g / 4.184)} kcal)</span>
-                            </div>
-                          )}
-                          {product.fat_100g && (
-                            <div className="flex justify-between">
-                              <span>Fett:</span>
-                              <span className="font-medium">{product.fat_100g}g</span>
-                            </div>
-                          )}
-                          {product.saturated_fat_100g && (
-                            <div className="flex justify-between">
-                              <span>- varav mättat:</span>
-                              <span className="font-medium">{product.saturated_fat_100g}g</span>
-                            </div>
-                          )}
-                          {product.sugars_100g && (
-                            <div className="flex justify-between">
-                              <span>Socker:</span>
-                              <span className="font-medium">{product.sugars_100g}g</span>
-                            </div>
-                          )}
-                          {product.salt_100g && (
-                            <div className="flex justify-between">
-                              <span>Salt:</span>
-                              <span className="font-medium">{product.salt_100g}g</span>
-                            </div>
-                          )}
-                          {product.proteins_100g && (
-                            <div className="flex justify-between">
-                              <span>Protein:</span>
-                              <span className="font-medium">{product.proteins_100g}g</span>
-                            </div>
-                          )}
-                          {product.fiber_100g && (
-                            <div className="flex justify-between">
-                              <span>Fiber:</span>
-                              <span className="font-medium">{product.fiber_100g}g</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Ingredients */}
-                    {(product.ingredients_text_sv || product.ingredients_text) && (
-                      <div>
-                        <h5 className="font-medium text-foreground mb-2">Ingredienser</h5>
-                        <p className="text-sm text-warm-neutral">
-                          {product.ingredients_text_sv || product.ingredients_text}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Categories */}
-                    {categories.length > 0 && (
-                      <div>
-                        <h5 className="font-medium text-foreground mb-2">Kategorier</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {categories.map((category, index) => (
-                            <Badge key={index} variant="secondary" className="bg-cream text-warm-neutral">
-                              {category.trim()}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* EAN + OFF Link */}
-                    <div className="pt-2 border-t border-border">
-                      <div className="flex items-center justify-between text-xs text-warm-neutral">
-                        <span>EAN: {product.id}</span>
-                        <a 
-                          href={`https://world.openfoodfacts.org/product/${product.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-warm-yellow hover:underline"
-                        >
-                          Visa på OpenFoodFacts →
-                        </a>
-                      </div>
-                    </div>
-                    
+                     
+                     {/* EAN + OFF Link */}
+                     <div className="pb-2 border-b border-border">
+                       <div className="flex items-center justify-between text-xs text-warm-neutral">
+                         <span>EAN: {product.id}</span>
+                         <a 
+                           href={`https://world.openfoodfacts.org/product/${product.id}`}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="text-warm-yellow hover:underline"
+                         >
+                           Visa på OpenFoodFacts →
+                         </a>
+                       </div>
+                     </div>
+                     
+                     {/* Nutrition Facts */}
+                     {(product.energy_100g || product.fat_100g || product.sugars_100g || product.salt_100g) && (
+                       <div>
+                         <h5 className="font-medium text-foreground mb-2">Näringsvärden (per 100g)</h5>
+                         <div className="grid grid-cols-2 gap-2 text-sm">
+                           {product.energy_100g && (
+                             <div className="flex justify-between">
+                               <span>Energi:</span>
+                               <span className="font-medium">{Math.round(product.energy_100g)} kJ ({Math.round(product.energy_100g / 4.184)} kcal)</span>
+                             </div>
+                           )}
+                           {product.fat_100g && (
+                             <div className="flex justify-between">
+                               <span>Fett:</span>
+                               <span className="font-medium">{product.fat_100g}g</span>
+                             </div>
+                           )}
+                           {product.saturated_fat_100g && (
+                             <div className="flex justify-between">
+                               <span>- varav mättat:</span>
+                               <span className="font-medium">{product.saturated_fat_100g}g</span>
+                             </div>
+                           )}
+                           {product.sugars_100g && (
+                             <div className="flex justify-between">
+                               <span>Socker:</span>
+                               <span className="font-medium">{product.sugars_100g}g</span>
+                             </div>
+                           )}
+                           {product.salt_100g && (
+                             <div className="flex justify-between">
+                               <span>Salt:</span>
+                               <span className="font-medium">{product.salt_100g}g</span>
+                             </div>
+                           )}
+                           {product.proteins_100g && (
+                             <div className="flex justify-between">
+                               <span>Protein:</span>
+                               <span className="font-medium">{product.proteins_100g}g</span>
+                             </div>
+                           )}
+                           {product.fiber_100g && (
+                             <div className="flex justify-between">
+                               <span>Fiber:</span>
+                               <span className="font-medium">{product.fiber_100g}g</span>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     )}
+                     
+                     {/* Ingredients */}
+                     {(product.ingredients_text_sv || product.ingredients_text) && (
+                       <div>
+                         <h5 className="font-medium text-foreground mb-2">Ingredienser</h5>
+                         <p className="text-sm text-warm-neutral">
+                           {product.ingredients_text_sv || product.ingredients_text}
+                         </p>
+                       </div>
+                     )}
+                     
+                     {/* Categories */}
+                     {categories.length > 0 && (
+                       <div>
+                         <h5 className="font-medium text-foreground mb-2">Kategorier</h5>
+                         <div className="flex flex-wrap gap-2">
+                           {categories.map((category, index) => (
+                             <Badge key={index} variant="secondary" className="bg-cream text-warm-neutral">
+                               {category.trim()}
+                             </Badge>
+                           ))}
+                         </div>
+                       </div>
+                     )}
+                     
+                     {/* Betyg (Ratings) */}
+                     {(product.nutriscore_grade || product.ecoscore_grade || product.nova_group) && (
+                       <div>
+                         <h5 className="font-medium text-foreground mb-2">Betyg</h5>
+                         <div className="flex flex-wrap gap-2">
+                           {product.nutriscore_grade && (
+                             <Badge variant="outline" className="bg-fresh-green/10 text-fresh-green border-fresh-green/30">
+                               Nutri-Score: {product.nutriscore_grade.toUpperCase()}
+                             </Badge>
+                           )}
+                           {product.ecoscore_grade && (
+                             <Badge variant="outline" className="bg-fresh-green/10 text-fresh-green border-fresh-green/30">
+                               Eco-Score: {product.ecoscore_grade.toUpperCase()}
+                             </Badge>
+                           )}
+                           {product.nova_group && (
+                             <Badge variant="outline" className="bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30">
+                               NOVA: {product.nova_group}
+                             </Badge>
+                           )}
+                         </div>
+                       </div>
+                     )}
+                     
                   </CollapsibleContent>
                 </Collapsible>
               </>
