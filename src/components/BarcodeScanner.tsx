@@ -16,6 +16,8 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     if (!codeReader.current) {
@@ -23,123 +25,98 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
     }
     
     return () => {
-      if (codeReader.current) {
-        codeReader.current.reset();
-      }
+      stopCamera();
     };
   }, []);
 
+  // Effect to start camera when dialog opens
+  useEffect(() => {
+    if (isOpen && !isScanning) {
+      startCamera();
+    } else if (!isOpen) {
+      stopCamera();
+    }
+  }, [isOpen]);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (codeReader.current) {
+      codeReader.current.reset();
+    }
+    setIsScanning(false);
+    setCameraError(null);
+  };
+
   const startCamera = async () => {
-    if (!videoRef.current || !codeReader.current || isScanning) return;
+    if (!videoRef.current || !codeReader.current || isScanning) {
+      return;
+    }
 
     try {
       setIsScanning(true);
+      setCameraError(null);
       
-      // Enhanced video constraints for better barcode detection
-      const constraints = {
-        video: {
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1920, min: 640, max: 1920 },
-          height: { ideal: 1080, min: 480, max: 1080 },
-          frameRate: { ideal: 30, min: 15, max: 30 },
-          focusMode: 'continuous',
-          exposureMode: 'continuous',
-          whiteBalanceMode: 'continuous'
-        }
-      };
+      console.log('🎥 Starting camera...');
       
-      // Apply 3x zoom for better detection as requested
-      if (videoRef.current) {
-        videoRef.current.style.transform = 'scale(3)';
-        videoRef.current.style.transformOrigin = 'center center';
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
       
-      // Enhanced scanning with rotation handling and multiple decode attempts
-      const decodeOptions = {
-        tryHarder: true,
-        multiple: false,
-        // Comprehensive format support for better EAN detection
-        possibleFormats: [
-          'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39',
-          'ITF', 'CODABAR', 'RSS_14', 'RSS_EXPANDED', 'QR_CODE', 'DATA_MATRIX'
-        ]
-      };
-      
-      // Enhanced decoding with rotation handling
-      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, async (result, error) => {
-        if (result) {
-          const barcodeText = result.getText();
-          // Validate EAN format (should be numeric and proper length)
-          if (/^\d{8,14}$/.test(barcodeText)) {
-            console.log(`📷 Valid barcode detected: ${barcodeText}`);
-            handleBarcodeDetected(barcodeText);
-            return;
-          } else {
-            console.log(`📷 Invalid barcode format: ${barcodeText}`);
-          }
-        }
-        
-        // If standard detection fails, try rotation handling
-        if (error && videoRef.current && codeReader.current) {
-          try {
-            // Capture current video frame for rotation attempts
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              canvas.width = videoRef.current.videoWidth;
-              canvas.height = videoRef.current.videoHeight;
-              ctx.drawImage(videoRef.current, 0, 0);
-              
-              // Try different rotations: 90, 180, 270 degrees
-              const rotations = [90, 180, 270];
-              for (const angle of rotations) {
-                try {
-                  const rotatedCanvas = document.createElement('canvas');
-                  const rotatedCtx = rotatedCanvas.getContext('2d');
-                  if (rotatedCtx) {
-                    // Set canvas dimensions based on rotation
-                    if (angle === 90 || angle === 270) {
-                      rotatedCanvas.width = canvas.height;
-                      rotatedCanvas.height = canvas.width;
-                    } else {
-                      rotatedCanvas.width = canvas.width;
-                      rotatedCanvas.height = canvas.height;
-                    }
-                    
-                    // Apply rotation transformation
-                    rotatedCtx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
-                    rotatedCtx.rotate((angle * Math.PI) / 180);
-                    rotatedCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
-                    
-                    // Try to decode rotated image
-                    const rotatedResult = await codeReader.current.decodeFromImageUrl(rotatedCanvas.toDataURL());
-                    if (rotatedResult) {
-                      const rotatedBarcodeText = rotatedResult.getText();
-                      if (/^\d{8,14}$/.test(rotatedBarcodeText)) {
-                        console.log(`📷 Valid barcode detected at ${angle}° rotation: ${rotatedBarcodeText}`);
-                        handleBarcodeDetected(rotatedBarcodeText);
-                        return;
-                      }
-                    }
-                  }
-                } catch (rotationError) {
-                  // Silently continue to next rotation
-                }
-              }
-            }
-          } catch (frameError) {
-            // Silently handle frame capture errors
-          }
-        }
-        
-        // Suppress most scanning errors to reduce console noise
-        if (error && !['NotFoundException', 'ChecksumException', 'FormatException'].includes(error.name)) {
-          console.warn('Scanner error:', error.name);
+      // Request camera permissions and stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 },
+          frameRate: { ideal: 30, min: 15 }
         }
       });
-    } catch (err) {
-      console.error('Error starting camera:', err);
+      
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.style.transform = 'scale(3)';
+        videoRef.current.style.transformOrigin = 'center center';
+        
+        // Wait for video to be ready before starting decode
+        await new Promise<void>((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              console.log('📹 Video metadata loaded, starting decode...');
+              resolve();
+            };
+          }
+        });
+        
+        // Start decoding with enhanced options
+        await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+          if (result) {
+            const barcodeText = result.getText();
+            // Validate EAN format
+            if (/^\d{8,14}$/.test(barcodeText)) {
+              console.log(`📷 Valid barcode detected: ${barcodeText}`);
+              handleBarcodeDetected(barcodeText);
+              return;
+            }
+          }
+          
+          // Reduce console noise - only log significant errors
+          if (error && !error.name.includes('NotFoundException')) {
+            console.warn('Scanner error:', error.name);
+          }
+        });
+        
+        console.log('✅ Camera started successfully');
+      }
+    } catch (err: any) {
+      console.error('❌ Error starting camera:', err);
       setIsScanning(false);
+      setCameraError(err.message || 'Kunde inte starta kameran');
     }
   };
 
@@ -171,22 +148,13 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      setIsScanning(false);
-      if (codeReader.current) {
-        codeReader.current.reset();
-      }
-    }
+    // The useEffect will handle starting/stopping the camera
   };
 
   return (
     <>
       <Button
-        onClick={() => {
-          setIsOpen(true);
-          // Start camera immediately when dialog opens
-          setTimeout(startCamera, 300);
-        }}
+        onClick={() => setIsOpen(true)}
         variant="outline"
         className="flex items-center gap-2"
       >
@@ -202,7 +170,7 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
           
           {/* Camera view directly without tabs */}
           <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+            <div className="aspect-square bg-muted rounded-lg overflow-hidden relative">
               <video
                 ref={videoRef}
                 className="w-full h-full object-cover"
@@ -210,10 +178,25 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
                 playsInline
                 muted
               />
+              {cameraError && (
+                <div className="absolute inset-0 bg-background/90 flex items-center justify-center p-4">
+                  <div className="text-center">
+                    <p className="text-destructive text-sm font-medium mb-2">Kamerafel</p>
+                    <p className="text-muted-foreground text-xs">{cameraError}</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Håll EAN-koden framför kameran för att skanna
-            </p>
+            {!cameraError && (
+              <p className="text-sm text-muted-foreground text-center">
+                Håll EAN-koden framför kameran för att skanna
+              </p>
+            )}
+            {cameraError && (
+              <p className="text-sm text-destructive text-center">
+                Kontrollera kameratillstånd och försök igen
+              </p>
+            )}
             
             {/* Optional file upload as secondary option */}
             <div className="pt-4 border-t">
