@@ -80,16 +80,26 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.style.transform = 'scale(3)';
-        videoRef.current.style.transformOrigin = 'center center';
         
         // Wait for video to be ready before starting decode
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           if (videoRef.current) {
             videoRef.current.onloadedmetadata = () => {
               console.log('📹 Video metadata loaded, starting decode...');
               resolve();
             };
+            videoRef.current.onerror = (error) => {
+              console.error('📹 Video error:', error);
+              reject(error);
+            };
+            
+            // Timeout fallback
+            setTimeout(() => {
+              console.log('📹 Video load timeout, proceeding anyway...');
+              resolve();
+            }, 3000);
+          } else {
+            reject(new Error('Video element not available'));
           }
         });
         

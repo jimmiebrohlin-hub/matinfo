@@ -284,20 +284,20 @@ export class OpenFoodFactsService {
    */
   static async searchProductsByText(searchText: string): Promise<Product[]> {
     try {
-      // Use the exact same search approach as OFF web interface
+      console.log(`🔍 Searching for products with text: "${searchText}"`);
+      
+      // Use API v2 directly as it's more reliable
       const searchParams = new URLSearchParams({
         search_terms: searchText.trim(),
-        sort_by: "unique_scans_n", // Sort by popularity (scan count) like OFF web interface
-        page_size: "50", // Show at least 50 products per page
+        sort_by: "unique_scans_n",
+        page_size: "50",
         page: "1",
         fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
       });
 
-      console.log(`🔍 Searching for products with text: "${searchText}"`);
-      console.log(`📍 Search URL: ${BASE_URL}/cgi/search.pl?${searchParams}`);
+      console.log(`📍 Search URL: ${BASE_URL}/api/v2/search?${searchParams}`);
       
-      // Use the CGI endpoint like the web interface instead of API v2
-      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -306,33 +306,8 @@ export class OpenFoodFactsService {
       });
       
       if (!response.ok) {
-        console.log(`❌ CGI response not ok: ${response.status}, trying API v2 fallback...`);
-        
-        // Fallback to API v2 if CGI fails
-        const apiParams = new URLSearchParams({
-          search_terms: searchText.trim(),
-          search_simple: "1",
-          action: "process",
-          page_size: "50",
-          sort_by: "unique_scans_n",
-          page: "1",
-          fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
-        });
-        
-        const apiResponse = await fetch(`${BASE_URL}/api/v2/search?${apiParams}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'SvenskMatupptackaren/1.0'
-          }
-        });
-        
-        if (!apiResponse.ok) {
-          throw new Error(`HTTP error! status: ${apiResponse.status}`);
-        }
-        
-        const data = await apiResponse.json();
-        return this.processSearchResults(data, searchText);
+        console.error(`❌ API response not ok: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
