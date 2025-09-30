@@ -108,36 +108,9 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
     }
   }
 
-  // Determine special measurements based on custom product category
-  const getSpecialMeasurements = (customCategory: string) => {
-    const specialMeasurements = {
-      glas: false,
-      tsk: false,
-      msk: false
-    };
-
-    switch (customCategory) {
-      case 'Dryck':
-      case 'Kaffe':
-        specialMeasurements.glas = true;
-        break;
-      case 'Pålägg':
-      case 'Mejeri':
-        specialMeasurements.tsk = true;
-        specialMeasurements.msk = true;
-        break;
-      default:
-        // No special measurements for other categories
-        break;
-    }
-
-    return specialMeasurements;
-  };
-
   // Get product category using the centralized function
   const categoryResult = detectProductCategory(product.product_name, product.categories, product.brands);
-  const { customCategory, conversionData } = categoryResult;
-  const specialMeasurements = getSpecialMeasurements(customCategory);
+  const { customCategory, specialMeasurements } = categoryResult;
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-elevated bg-gradient-card backdrop-blur-sm animate-fade-in hover:shadow-warm transition-all duration-300">
@@ -226,20 +199,20 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
 
                     {/* Category-specific measurements */}
                     
-                     {/* 1 glas (2 dl) - for Dryck */}
-                     {(customCategory === 'Dryck' || specialMeasurements.glas) && (
+                     {/* Skivbart - visa "en skiva" med olika vikter */}
+                     {customCategory === 'Skivbart' && specialMeasurements?.type === 'slice' && (
                        <div className="flex items-center gap-2">
                           <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * 200) / 100) : '-'}
+                            {energyScore && specialMeasurements.sliceWeight ? Math.round((energyScore.per100g * specialMeasurements.sliceWeight) / 100) : '-'}
                          </Badge>
                          <span>
-                           <strong>1 glas:</strong> 2 dl
+                           <strong>1 skiva:</strong> {specialMeasurements.sliceWeight}g
                          </span>
                        </div>
                      )}
 
-                     {/* 1 tsk/msk - for Krämigt & Bredbart */}
-                     {(customCategory === 'Krämigt & Bredbart' || specialMeasurements.tsk) && (
+                     {/* Krämigt - visa tsk, msk, dl */}
+                     {customCategory === 'Krämigt' && specialMeasurements?.type === 'spoon' && (
                        <>
                          <div className="flex items-center gap-2">
                             <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
@@ -257,63 +230,71 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                              <strong>1 msk:</strong> 15g
                            </span>
                          </div>
+                         <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                              {energyScore ? Math.round(energyScore.per100g) : '-'}
+                           </Badge>
+                           <span>
+                             <strong>1 dl:</strong> 100g
+                           </span>
+                         </div>
                        </>
                      )}
 
-                     {/* 1 skiva - for Bröd (30g), Ost (10g), Pålägg (8g) */}
-                     {customCategory === 'Bröd' && (
+                     {/* Dryck - visa 1 glas (2 dl) */}
+                     {customCategory === 'Dryck' && specialMeasurements?.type === 'glass' && (
                        <div className="flex items-center gap-2">
                           <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * 30) / 100) : '-'}
+                            {energyScore ? Math.round((energyScore.per100g * 200) / 100) : '-'}
                          </Badge>
                          <span>
-                           <strong>1 skiva:</strong> 30g
+                           <strong>1 glas:</strong> 2 dl
                          </span>
                        </div>
                      )}
 
-                     {customCategory === 'Ost' && (
-                       <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * 10) / 100) : '-'}
-                         </Badge>
-                         <span>
-                           <strong>1 skiva:</strong> 10g
-                         </span>
-                       </div>
+                     {/* Kokas - visa 100g torrt, 100g kokt, 1 dl kokt */}
+                     {customCategory === 'Kokas' && specialMeasurements?.type === 'cooked' && (
+                       <>
+                         <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                              {energyScore ? energyScore.per100g : '-'}
+                           </Badge>
+                           <span>
+                             <strong>100g torrt</strong>
+                           </span>
+                         </div>
+                         {specialMeasurements.swellingFactor && (
+                           <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                                {energyScore ? Math.round(energyScore.per100g / specialMeasurements.swellingFactor) : '-'}
+                             </Badge>
+                             <span>
+                               <strong>100g kokt</strong> (svällfaktor: {specialMeasurements.swellingFactor}x)
+                             </span>
+                           </div>
+                         )}
+                         {specialMeasurements.cookedDensity && specialMeasurements.swellingFactor && (
+                           <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
+                                {energyScore ? Math.round((energyScore.per100g * specialMeasurements.cookedDensity) / (100 * specialMeasurements.swellingFactor)) : '-'}
+                             </Badge>
+                             <span>
+                               <strong>1 dl kokt</strong> (~{specialMeasurements.cookedDensity}g/dl kokt)
+                             </span>
+                           </div>
+                         )}
+                       </>
                      )}
 
-                     {customCategory === 'Pålägg (skivat)' && (
+                     {/* Volymvara - visa 1 dl med volymvikt */}
+                     {customCategory === 'Volymvara' && specialMeasurements?.type === 'volume' && specialMeasurements.volumeDensity && (
                        <div className="flex items-center gap-2">
                           <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * 8) / 100) : '-'}
+                            {energyScore ? Math.round((energyScore.per100g * specialMeasurements.volumeDensity) / 100) : '-'}
                          </Badge>
                          <span>
-                           <strong>1 skiva:</strong> 8g
-                         </span>
-                       </div>
-                     )}
-
-                     {/* 1 dl conversion - for Torrvara (volym) */}
-                     {conversionData && conversionData.type === 'volume' && (
-                       <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * conversionData.factor) / 100) : '-'}
-                         </Badge>
-                         <span>
-                           <strong>1 dl:</strong> {conversionData.factor}g
-                         </span>
-                       </div>
-                     )}
-
-                     {/* 1 dl kokt - for Torrvara (sväller vid kokning) */}
-                     {conversionData && conversionData.type === 'swelling' && (
-                       <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * 100) / (100 * conversionData.factor)) : '-'}
-                         </Badge>
-                         <span>
-                           <strong>1 dl kokt:</strong> ca {Math.round(100 / conversionData.factor)}g torrvaror (Svällfaktor: {conversionData.factor}x)
+                           <strong>1 dl:</strong> {specialMeasurements.volumeDensity}g
                          </span>
                        </div>
                      )}
