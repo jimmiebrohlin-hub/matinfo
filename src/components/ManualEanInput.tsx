@@ -132,7 +132,7 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
         <div className="space-y-2">
           <Input
             type="text"
-            placeholder="Sök produkt eller ange EAN-kod"
+            placeholder="Sök produkt eller ange EAN-kod - test"
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value);
