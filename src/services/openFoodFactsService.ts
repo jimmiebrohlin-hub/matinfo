@@ -1,192 +1,153 @@
-// openFoodFactsService.ts
 import { Product } from "@/components/ProductCard";
 
 const BASE_URL = "https://world.openfoodfacts.org";
 
+// List of popular Swedish food product categories
+const SWEDISH_CATEGORIES = [
+  "knäckebröd", // Crispbread
+  "mjölkprodukter", // Dairy products
+  "kött", // Meat
+  "fisk", // Fish
+  "ost", // Cheese
+  "smör", // Butter
+  "yoghurt", // Yogurt
+  "kött-charkuterier", // Deli meats
+  "konserver", // Canned goods
+  "bröd", // Bread
+  "kakor", // Cookies
+  "godis", // Candy
+  "drycker", // Beverages
+  "kaffe", // Coffee
+  "te", // Tea
+  "pasta", // Pasta
+  "ris", // Rice
+  "potatis", // Potatoes
+  "frukostflingor", // Breakfast cereals
+  "sylt", // Jam
+];
+
+// Popular Swedish brands to help filter
+const SWEDISH_BRANDS = [
+  "ICA", "Coop", "Arla", "Scan", "Findus", "Fazer", "Marabou", "Gevalia",
+  "Löfbergs", "Oatly", "Alpro", "Barilla", "Santa Maria", "Felix", "Estrella",
+  "Kalles", "Bregott", "Garant", "Eldorado", "Swedish Match"
+];
+
 export class OpenFoodFactsService {
   /**
-   * Minimal query normalization for better free-text search
+   * Search for products with Swedish origin or commonly found in Swedish stores
    */
-  private static normalizeQuery(q: string): string {
-    // Lowercase, trim, remove accents
-    const base = q.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
-    // Tiny synonym/misspelling map to catch frequent cases
-    const map: Record<string, string> = {
-      "choclate": "chocolate",
-      "chocolat": "chocolate",
-      "choccolate": "chocolate",
-      "choklad": "chocolate",
-      "biscuits": "cookies",
-    };
-    return map[base] ?? base;
-  }
-
-  private static isSingleToken(q: string): boolean {
-    return q.split(/\s+/).length === 1;
-  }
-
-  /**
-   * Simplified free-text search (global, no country restrictions).
-   * - Uses API v2 free-text with search_simple=1
-   * - Minimal normalization (typos like "choclate" → "chocolate")
-   * - Optional fallback: if zero results and the query is a single word,
-   *   try a category tag filter (e.g., "chocolate")
-   */
-  static async searchProductsByText(searchText: string, opts?: { pageSize?: number; page?: number }): Promise<Product[]> {
+  static async searchSwedishProducts(page: number = 1, pageSize: number = 24): Promise<Product[]> {
     try {
-      const pageSize = String(opts?.pageSize ?? 50);
-      const page = String(opts?.page ?? 1);
-      const q = this.normalizeQuery(searchText);
-
-      const fields = [
-        "code","product_name","product_name_en","product_name_sv","brands",
-        "image_url","image_front_url",
-        "nutriscore_grade","ecoscore_grade","nova_group",
-        "categories","ingredients_text","ingredients_text_sv",
-        "nutriments","quantity","serving_size","serving_quantity",
-        "net_weight_unit","net_weight_value","packaging","product_quantity",
-      ].join(",");
-
-      // Primary: free-text search (simple and broad)
-      const primaryParams = new URLSearchParams({
-        search_terms: q,
-        search_simple: "1",
-        sort_by: "unique_scans_n",
-        page_size: pageSize,
-        page,
-        fields,
+      const searchParams = new URLSearchParams({
+        countries_tags_en: "sweden",
+        page_size: pageSize.toString(),
+        page: page.toString(),
+        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments"
       });
 
-      const primaryUrl = `${BASE_URL}/api/v2/search?${primaryParams}`;
-      console.log(`🔎 Free-text search URL: ${primaryUrl}`);
-
-      const primaryRes = await fetch(primaryUrl, {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": "SvenskMatupptackaren/1.0" },
-      });
-
-      if (!primaryRes.ok) throw new Error(`HTTP error! status: ${primaryRes.status}`);
-
-      const primaryData = await primaryRes.json();
-      let products = this.processSearchResults(primaryData, searchText);
-
-      // Optional lightweight fallback: if zero results and single token, try one category tag
-      if (products.length === 0 && this.isSingleToken(q)) {
-        const fallbackParams = new URLSearchParams({
-          sort_by: "unique_scans_n",
-          page_size: pageSize,
-          page,
-          fields,
-          tagtype_0: "categories",
-          tag_contains_0: "contains",
-          tag_0: q, // e.g., "chocolate"
-        });
-        const fallbackUrl = `${BASE_URL}/api/v2/search?${fallbackParams}`;
-        console.log(`🧭 Fallback tag search URL: ${fallbackUrl}`);
-
-        const fallbackRes = await fetch(fallbackUrl, {
-          method: "GET",
-          headers: { Accept: "application/json", "User-Agent": "SvenskMatupptackaren/1.0" },
-        });
-
-        if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          products = this.processSearchResults(fallbackData, `${searchText} (fallback)`);
+      console.log(`🔍 Searching Swedish products...`);
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
         }
+      });
+      
+      if (!response.ok) {
+        console.log(`❌ API response not ok: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
+      console.log(`📊 API response:`, data);
 
-      return products;
+      if (data && data.products) {
+        return data.products.filter((product: any) => 
+          product.product_name || product.product_name_en || product.product_name_sv
+        );
+      }
+      return [];
     } catch (error) {
-      console.error("Error searching products by text:", error);
+      console.error("Error searching Swedish products:", error);
       throw error;
     }
   }
 
   /**
-   * Optional: Get product by barcode/EAN
+   * Get a random product from Open Food Facts database
    */
-  static async getProductByBarcode(barcode: string): Promise<Product | null> {
+  static async getRandomSwedishProduct(): Promise<Product | null> {
     try {
-      const response = await fetch(
-        `${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity`
-      );
-      const data = await response.json();
+      console.log("🔍 Fetching random Swedish product from OFF...");
+      
+      // Use popular Swedish food categories for better results
+      const categories = [
+        "dairy", "bread", "meat", "fish", "cheese", "coffee", 
+        "pasta", "cereals", "beverages", "chocolate", "cookies"
+      ];
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+      
+      const searchParams = new URLSearchParams({
+        categories_tags_en: randomCategory,
+        countries_tags_en: "sweden",
+        page_size: "50",
+        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
+      });
 
-      if (data && data.product && data.status === 1) {
-        return this.normalizeProduct(data.product);
-      }
-      return null;
-    } catch (error) {
-      console.error("Error getting product by barcode:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Optional: Get multiple products by their barcodes/EANs
-   */
-  static async getProductsByBarcodes(barcodes: string[]): Promise<Product[]> {
-    const products: Product[] = [];
-
-    // Process in chunks to avoid overwhelming the API
-    for (let i = 0; i < barcodes.length; i += 5) {
-      const chunk = barcodes.slice(i, i + 5);
-      const chunkPromises = chunk.map(barcode => this.getProductByBarcode(barcode));
-      const chunkResults = await Promise.allSettled(chunkPromises);
-
-      chunkResults.forEach((result) => {
-        if (result.status === 'fulfilled' && result.value) {
-          products.push(result.value);
+      console.log(`🔍 Searching for products in category: ${randomCategory}`);
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
         }
       });
 
-      // Small delay to be respectful to the API
-      if (i + 5 < barcodes.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (!response.ok) {
+        console.error(`❌ HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    }
 
-    return products;
-  }
+      const data = await response.json();
+      console.log(`📊 OFF search response:`, data);
 
-  /**
-   * Internal: Process search results (filters and normalization)
-   */
-  private static processSearchResults(data: any, searchText: string): Product[] {
-    console.log(`📊 Text search response for "${searchText}":`, {
-      count: data.count,
-      products_found: data.products?.length || 0,
-      first_product: data.products?.[0]?.product_name || data.products?.[0]?.code
-    });
-
-    if (data && data.products && data.products.length > 0) {
-      const filteredProducts = data.products
-        .filter((product: any) =>
-          (product.product_name || product.product_name_en || product.product_name_sv) &&
-          (product.image_front_url || product.image_url) // Ensure we have images
-        )
-        .map((product: any) => this.normalizeProduct(product))
-        .filter((product: Product) =>
-          product.product_name && product.product_name.length > 0
+      if (data && data.products && data.products.length > 0) {
+        // Filter products that have name and image
+        const validProducts = data.products.filter((product: any) => 
+          (product.product_name || product.product_name_en || product.product_name_sv) && 
+          (product.image_front_url || product.image_url) &&
+          product.code // Ensure we have a valid product code
         );
-
-      console.log(`✅ Filtered ${filteredProducts.length} products from ${data.products.length} results`);
-      return filteredProducts;
+        
+        if (validProducts.length > 0) {
+          const randomIndex = Math.floor(Math.random() * validProducts.length);
+          const selectedProduct = validProducts[randomIndex];
+          console.log(`✅ Found valid product: ${selectedProduct.product_name || selectedProduct.product_name_en}`);
+          return this.normalizeProduct(selectedProduct);
+        }
+      }
+      
+      console.warn("No valid products found in response");
+      return null;
+    } catch (error) {
+      console.error("Error getting random Swedish product:", error);
+      // Don't throw error, return null to let UI handle gracefully
+      return null;
     }
-
-    console.log(`❌ No products found in API response for "${searchText}"`);
-    return [];
   }
 
+
   /**
-   * Internal: Normalize product data from OFF API
+   * Normalize product data from OFF API
    */
   private static normalizeProduct(product: any): Product {
     const nutriments = product.nutriments || {};
-
+    
     // Try to extract serving size from nutrition data ratio
     let serving_size = undefined;
-
+    
     // First check for numeric serving_quantity field (most reliable)
     if (product.serving_quantity) {
       serving_size = parseFloat(product.serving_quantity);
@@ -206,17 +167,19 @@ export class OpenFoodFactsService {
       serving_size = Math.round(ratio * 100);
     }
 
-    // Extract package weight from various possible fields
+    // Extract package weight from various possible fields (improved to prioritize quantity)
     let package_weight = undefined;
-
+    
     // Try quantity first (this is usually the most reliable - OFF's main weight field)
     if (product.quantity) {
       const quantityStr = product.quantity.toString();
       console.log(`🔍 Processing quantity field: "${quantityStr}" for product: ${product.product_name || product.code}`);
-
+      
       // Look for patterns like "185 g", "85g", "3 oz (85 g)", "240g", "1.5 kg"
+      // Enhanced regex to be more flexible with spacing and formats
       const weightMatch = quantityStr.match(/(?:\((\d+(?:[,.]?\d+)?)\s*g\))|(\d+(?:[,.]?\d+)?)\s*g(?:\b|$)/i);
       if (weightMatch) {
+        // Use the value in parentheses if available, otherwise use the direct match
         const weightValue = weightMatch[1] || weightMatch[2];
         package_weight = parseFloat(weightValue.replace(',', '.'));
         console.log(`✅ Found weight from quantity: ${package_weight}g`);
@@ -231,12 +194,12 @@ export class OpenFoodFactsService {
         }
       }
     }
-
+    
     // Fallback to net_weight_value + unit
     if (!package_weight && product.net_weight_value && product.net_weight_unit === 'g') {
       package_weight = parseFloat(product.net_weight_value);
     }
-
+    
     // Try product_quantity as another fallback
     if (!package_weight && product.product_quantity) {
       const weight = parseFloat(product.product_quantity);
@@ -244,7 +207,7 @@ export class OpenFoodFactsService {
         package_weight = weight;
       }
     }
-
+    
     // Last resort: extract from packaging text
     if (!package_weight && product.packaging) {
       const weightMatch = product.packaging.match(/(\d+(?:\.\d+)?)\s*g/i);
@@ -255,7 +218,7 @@ export class OpenFoodFactsService {
 
     // Extract pieces per package using improved logic
     let pieces_per_package = 1; // Default to 1 piece per package
-
+    
     // Step 1: Check "quantity" field for patterns like "X st", "X-pack", "X x Y"
     if (product.quantity) {
       const quantityStr = product.quantity.toString();
@@ -264,7 +227,7 @@ export class OpenFoodFactsService {
         pieces_per_package = parseInt(piecesMatch[1]);
       }
     }
-
+    
     // Step 2: If not found and we have both total weight and serving size, calculate
     if (pieces_per_package === 1 && package_weight && serving_size && serving_size > 0) {
       const calculated_pieces = Math.floor(package_weight / serving_size);
@@ -272,7 +235,7 @@ export class OpenFoodFactsService {
         pieces_per_package = calculated_pieces;
       }
     }
-
+    
     // Step 3: Check "packaging" and "product_name" for piece patterns
     if (pieces_per_package === 1) {
       const fieldsToCheck = [product.packaging, product.product_name, product.product_name_sv].filter(Boolean);
@@ -285,7 +248,7 @@ export class OpenFoodFactsService {
         }
       }
     }
-
+    
     return {
       id: product.code || product.id || product._id,
       product_name: product.product_name || product.product_name_en || "Okänd produkt",
@@ -310,5 +273,118 @@ export class OpenFoodFactsService {
       serving_size,
       pieces_per_package
     };
+  }
+
+
+  /**
+   * Get product by barcode/EAN
+   */
+  /**
+   * Search for products by text (product name)
+   */
+  static async searchProductsByText(searchText: string): Promise<Product[]> {
+    try {
+      console.log(`🔍 Searching for products with text: "${searchText}"`);
+      
+      // Use API v2 directly as it's more reliable
+      const searchParams = new URLSearchParams({
+        search_terms: searchText.trim(),
+        sort_by: "unique_scans_n",
+        page_size: "50",
+        page: "1",
+        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
+      });
+
+      console.log(`📍 Search URL: ${BASE_URL}/api/v2/search?${searchParams}`);
+      
+      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SvenskMatupptackaren/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`❌ API response not ok: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return this.processSearchResults(data, searchText);
+    } catch (error) {
+      console.error("Error searching products by text:", error);
+      throw error;
+    }
+  }
+
+  private static processSearchResults(data: any, searchText: string): Product[] {
+    console.log(`📊 Text search response for "${searchText}":`, {
+      count: data.count,
+      products_found: data.products?.length || 0,
+      first_product: data.products?.[0]?.product_name || data.products?.[0]?.code
+    });
+
+    if (data && data.products && data.products.length > 0) {
+      const filteredProducts = data.products
+        .filter((product: any) => 
+          (product.product_name || product.product_name_en || product.product_name_sv) &&
+          (product.image_front_url || product.image_url) // Ensure we have images
+        )
+        .map((product: any) => this.normalizeProduct(product))
+        .filter((product: Product) => 
+          product.product_name && product.product_name.length > 0
+        );
+      
+      console.log(`✅ Filtered ${filteredProducts.length} products from ${data.products.length} results`);
+      return filteredProducts;
+    }
+    
+    console.log(`❌ No products found in API response for "${searchText}"`);
+    return [];
+  }
+
+  /**
+   * Get multiple products by their barcodes/EANs
+   */
+  static async getProductsByBarcodes(barcodes: string[]): Promise<Product[]> {
+    const products: Product[] = [];
+    
+    // Process in chunks to avoid overwhelming the API
+    for (let i = 0; i < barcodes.length; i += 5) {
+      const chunk = barcodes.slice(i, i + 5);
+      const chunkPromises = chunk.map(barcode => this.getProductByBarcode(barcode));
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      
+      chunkResults.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          products.push(result.value);
+        }
+      });
+      
+      // Small delay to be respectful to the API
+      if (i + 5 < barcodes.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    return products;
+  }
+  /**
+   * Get product by barcode/EAN
+   */
+  static async getProductByBarcode(barcode: string): Promise<Product | null> {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v2/product/${barcode}?fields=code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity`);
+      const data = await response.json();
+
+      if (data && data.product && data.status === 1) {
+        return this.normalizeProduct(data.product);
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting product by barcode:", error);
+      return null;
+    }
   }
 }
