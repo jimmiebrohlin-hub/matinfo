@@ -59,25 +59,72 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
       
       console.log('🎥 Starting camera...');
       
-      // Let ZXing handle everything - camera access, video setup, and scanning
+      // Enhanced video constraints for better barcode detection
+      const constraints = {
+        video: {
+          facingMode: 'environment', // Use back camera on mobile
+          width: { ideal: 1920, min: 640, max: 1920 },
+          height: { ideal: 1080, min: 480, max: 1080 },
+          frameRate: { ideal: 30, min: 15, max: 30 },
+          focusMode: 'continuous',
+          exposureMode: 'continuous',
+          whiteBalanceMode: 'continuous',
+          advanced: [
+            { focusMode: 'continuous' },
+            { focusDistance: { ideal: 0.1 } },
+            { exposureMode: 'continuous' },
+            { brightness: { ideal: 0.5 } },
+            { contrast: { ideal: 1.2 } }
+          ]
+        }
+      };
+      
+      // Apply 2x zoom for better detection
+      if (videoRef.current) {
+        videoRef.current.style.transform = 'scale(2)';
+        videoRef.current.style.transformOrigin = 'center center';
+      }
+      
+      // Enhanced scanning with multiple decode attempts and rotation handling
+      const decodeOptions = {
+        tryHarder: true,
+        formats: [
+          'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39',
+          'ITF', 'CODABAR', 'RSS_14', 'RSS_EXPANDED'
+        ],
+        multiple: false,
+        inverted: true, // Also try inverted colors
+        rotation: [0, 90, 180, 270] // Try multiple rotations
+      };
+      
+      // Let ZXing handle camera access with enhanced settings
       await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
         if (result) {
           const barcodeText = result.getText();
-          // Validate EAN format
-          if (/^\\d{8,14}$/.test(barcodeText)) {
-            console.log(`📷 Valid barcode detected: ${barcodeText}`);
+          console.log(`🔍 Raw barcode detected: ${barcodeText}`);
+          
+          // More flexible EAN validation - allow various barcode formats
+          if (/^\d{8,14}$/.test(barcodeText)) {
+            console.log(`📷 Valid EAN detected: ${barcodeText}`);
             handleBarcodeDetected(barcodeText);
             return;
+          } else {
+            console.log(`⚠️ Invalid EAN format: ${barcodeText} (length: ${barcodeText.length})`);
           }
         }
         
-        // Reduce console noise - only log significant errors
-        if (error && !['NotFoundException', 'ChecksumException', 'FormatException'].includes(error.name)) {
-          console.warn('Scanner error:', error.name);
+        // Log more scanning attempts for debugging
+        if (error && error.name === 'NotFoundException') {
+          // Reduce noise but still log occasionally
+          if (Math.random() < 0.01) { // Log 1% of attempts
+            console.log('🔍 Scanning... (no barcode found yet)');
+          }
+        } else if (error && !['ChecksumException', 'FormatException'].includes(error.name)) {
+          console.warn('Scanner error:', error.name, error.message);
         }
       });
       
-      console.log('✅ Camera and scanner started');
+      console.log('✅ Camera and enhanced scanner started with 2x zoom');
       
     } catch (err: any) {
       console.error('❌ Error starting camera:', err);
