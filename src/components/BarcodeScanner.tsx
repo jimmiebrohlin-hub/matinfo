@@ -81,12 +81,22 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Wait for video to be ready before starting decode
+        // Wait for video to be ready and explicitly play it
         await new Promise<void>((resolve, reject) => {
           if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => {
-              console.log('📹 Video metadata loaded, starting decode...');
-              resolve();
+            videoRef.current.onloadedmetadata = async () => {
+              console.log('📹 Video metadata loaded');
+              try {
+                // Explicitly play the video
+                if (videoRef.current) {
+                  await videoRef.current.play();
+                  console.log('📹 Video playing successfully');
+                }
+                resolve();
+              } catch (playError) {
+                console.error('📹 Error playing video:', playError);
+                reject(playError);
+              }
             };
             videoRef.current.onerror = (error) => {
               console.error('📹 Video error:', error);
