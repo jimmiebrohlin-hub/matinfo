@@ -1,4 +1,122 @@
 import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Camera } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BrowserMultiFormatReader } from '@zxing/library';
+
+interface BarcodeScannerProps {
+  onBarcodeDetected: (barcode: string) => void;
+  autoStart?: boolean;
+}
+
+export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: BarcodeScannerProps) => {
+  const [isOpen, setIsOpen] = useState(autoStart);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!codeReader.current) {
+      codeReader.current = new BrowserMultiFormatReader();
+    }
+    
+    return () => {
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    };
+  }, []);
+
+  // Effect to start camera when dialog opens
+  useEffect(() => {
+    if (isOpen && !isScanning) {
+      // Add a small delay to ensure the dialog is fully rendered
+      setTimeout(startCamera, 300);
+    } else if (!isOpen) {
+      stopCamera();
+    }
+  }, [isOpen]);
+
+  const stopCamera = () => {
+    if (codeReader.current) {
+      codeReader.current.reset();
+    }
+    setIsScanning(false);
+    setCameraError(null);
+  };
+
+  const startCamera = async () => {
+    if (!videoRef.current || !codeReader.current || isScanning) {
+      return;
+    }
+
+    try {
+      setIsScanning(true);
+      setCameraError(null);
+      
+      console.log('🎥 Starting camera...');
+      
+      // Let ZXing handle everything - camera access, video setup, and scanning
+      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+        if (result) {
+          const barcodeText = result.getText();
+          // Validate EAN format
+          if (/^\\d{8,14}$/.test(barcodeText)) {
+            console.log(`📷 Valid barcode detected: ${barcodeText}`);
+            handleBarcodeDetected(barcodeText);
+            return;
+          }
+        }
+        
+        // Reduce console noise - only log significant errors
+        if (error && !['NotFoundException', 'ChecksumException', 'FormatException'].includes(error.name)) {
+          console.warn('Scanner error:', error.name);
+        }
+      });
+      
+      console.log('✅ Camera and scanner started');
+      
+    } catch (err: any) {
+      console.error('❌ Error starting camera:', err);
+      setIsScanning(false);
+      setCameraError(err.message || 'Kunde inte starta kameran');
+    }
+  };
+
+  const handleBarcodeDetected = (result: string) => {
+    onBarcodeDetected(result);
+    setIsOpen(false);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && codeReader.current) {
+      try {
+        const result = await codeReader.current.decodeFromImageUrl(URL.createObjectURL(file));
+        if (result) {
+          handleBarcodeDetected(result.getText());
+        } else {
+          alert("Ingen EAN-kod hittades i bilden");
+        }
+      } catch (err) {
+        console.error('Error reading barcode from image:', err);
+        alert("Kunde inte läsa EAN-kod från bilden");
+      }
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setCameraError(null);
+      setIsScanning(false);
+    }
+  };
+
+  return (
     <>
       <Button
         onClick={() => setIsOpen(true)}
@@ -15,6 +133,7 @@ import { useState, useRef, useEffect } from "react";
             <DialogTitle>Skanna Produkt</DialogTitle>
           </DialogHeader>
           
+          {/* Camera view directly without tabs */}
           <div className="space-y-4">
             <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
               <video
@@ -29,14 +148,6 @@ import { useState, useRef, useEffect } from "react";
                   <div className="text-center">
                     <p className="text-destructive text-sm font-medium mb-2">Kamerafel</p>
                     <p className="text-muted-foreground text-xs">{cameraError}</p>
-                    <Button 
-                      onClick={startCamera} 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2"
-                    >
-                      Försök igen
-                    </Button>
                   </div>
                 </div>
               )}
@@ -52,6 +163,7 @@ import { useState, useRef, useEffect } from "react";
               </p>
             )}
             
+            {/* Optional file upload as secondary option */}
             <div className="pt-4 border-t">
               <div className="space-y-2">
                 <Label htmlFor="barcode-image" className="text-sm text-muted-foreground">
