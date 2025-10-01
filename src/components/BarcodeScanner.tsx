@@ -66,72 +66,62 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       
-      // Request camera permissions and stream
+      // Request camera with simple constraints
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
-          width: { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
-          frameRate: { ideal: 30, min: 15 }
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         }
       });
       
+      console.log('✅ Camera stream obtained');
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Wait for video to be ready and explicitly play it
-        await new Promise<void>((resolve, reject) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = async () => {
-              console.log('📹 Video metadata loaded');
-              try {
-                // Explicitly play the video
-                if (videoRef.current) {
-                  await videoRef.current.play();
-                  console.log('📹 Video playing successfully');
-                }
-                resolve();
-              } catch (playError) {
-                console.error('📹 Error playing video:', playError);
-                reject(playError);
+        // Wait for video to be ready and play it
+        videoRef.current.onloadedmetadata = async () => {
+          console.log('📹 Video metadata loaded');
+          try {
+            if (videoRef.current) {
+              await videoRef.current.play();
+              console.log('✅ Video playing!');
+              
+              // Start barcode scanning after video is playing
+              if (codeReader.current) {
+                await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+                  if (result) {
+                    const barcodeText = result.getText();
+                    // Validate EAN format
+                    if (/^\d{8,14}$/.test(barcodeText)) {
+                      console.log(`📷 Valid barcode detected: ${barcodeText}`);
+                      handleBarcodeDetected(barcodeText);
+                      return;
+                    }
+                  }
+                  
+                  // Reduce console noise - only log significant errors
+                  if (error && !error.name.includes('NotFoundException')) {
+                    console.warn('Scanner error:', error.name);
+                  }
+                });
+                console.log('✅ Barcode scanner started');
               }
-            };
-            videoRef.current.onerror = (error) => {
-              console.error('📹 Video error:', error);
-              reject(error);
-            };
-            
-            // Timeout fallback
-            setTimeout(() => {
-              console.log('📹 Video load timeout, proceeding anyway...');
-              resolve();
-            }, 3000);
-          } else {
-            reject(new Error('Video element not available'));
-          }
-        });
-        
-        // Start decoding with enhanced options
-        await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
-          if (result) {
-            const barcodeText = result.getText();
-            // Validate EAN format
-            if (/^\d{8,14}$/.test(barcodeText)) {
-              console.log(`📷 Valid barcode detected: ${barcodeText}`);
-              handleBarcodeDetected(barcodeText);
-              return;
             }
+          } catch (playError: any) {
+            console.error('❌ Play error:', playError);
+            setCameraError(`Play failed: ${playError.message}`);
+            setIsScanning(false);
           }
-          
-          // Reduce console noise - only log significant errors
-          if (error && !error.name.includes('NotFoundException')) {
-            console.warn('Scanner error:', error.name);
-          }
-        });
-        
-        console.log('✅ Camera started successfully');
+        };
+
+        videoRef.current.onerror = (e) => {
+          console.error('❌ Video element error:', e);
+          setCameraError('Video element error');
+          setIsScanning(false);
+        };
       }
     } catch (err: any) {
       console.error('❌ Error starting camera:', err);
