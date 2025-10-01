@@ -51,7 +51,7 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
   };
 
   const startCamera = async () => {
-    if (!videoRef.current || !codeReader.current || isScanning) {
+    if (!videoRef.current || !codeReader.current) {
       return;
     }
 
@@ -158,7 +158,10 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
-    // The useEffect will handle starting/stopping the camera
+    if (!open) {
+      setCameraError(null);
+      setIsScanning(false);
+    }
   };
 
   return (
@@ -180,7 +183,7 @@ export const BarcodeScanner = ({ onBarcodeDetected, autoStart = false }: Barcode
           
           {/* Camera view directly without tabs */}
           <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden relative">
+            <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
               <video
                 ref={videoRef}
                 className="w-full h-full object-cover"
