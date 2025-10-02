@@ -208,11 +208,29 @@ export class OpenFoodFactsService {
       }
     }
     
-    // Last resort: extract from packaging text
+    // Extract from packaging text
     if (!package_weight && product.packaging) {
-      const weightMatch = product.packaging.match(/(\d+(?:\.\d+)?)\s*g/i);
+      const weightMatch = product.packaging.match(/(\d+(?:[,.]?\d+)?)\s*g/i);
       if (weightMatch) {
-        package_weight = parseFloat(weightMatch[1]);
+        package_weight = parseFloat(weightMatch[1].replace(',', '.'));
+      }
+    }
+    
+    // Extract from product name (e.g., "O'Boy Pose 700g – Mondelez")
+    if (!package_weight) {
+      const productName = product.product_name || product.product_name_sv || product.product_name_en || '';
+      // Look for patterns like "700g", "700 g", "1.5kg", "1,5kg"
+      const nameWeightMatch = productName.match(/(\d+(?:[,.]?\d+)?)\s*g(?:\b|$|\s)/i);
+      if (nameWeightMatch) {
+        package_weight = parseFloat(nameWeightMatch[1].replace(',', '.'));
+        console.log(`✅ Found weight from product name: ${package_weight}g`);
+      } else {
+        // Try kg to g conversion from name
+        const nameKgMatch = productName.match(/(\d+(?:[,.]?\d+)?)\s*kg(?:\b|$|\s)/i);
+        if (nameKgMatch) {
+          package_weight = parseFloat(nameKgMatch[1].replace(',', '.')) * 1000;
+          console.log(`✅ Found weight from product name (kg): ${package_weight}g`);
+        }
       }
     }
 
