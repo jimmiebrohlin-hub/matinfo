@@ -241,46 +241,28 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
                        </>
                      )}
 
-                     {/* Dryck - visa 1 glas (2 dl) */}
+                     {/* Dryck - visa 1 glas (2,5 dl) */}
                      {customCategory === 'Dryck' && specialMeasurements?.type === 'glass' && (
                        <div className="flex items-center gap-2">
                           <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                            {energyScore ? Math.round((energyScore.per100g * 200) / 100) : '-'}
+                            {energyScore ? Math.round((energyScore.per100g * 250) / 100) : '-'}
                          </Badge>
                          <span>
-                           <strong>1 glas:</strong> 2 dl
+                           <strong>1 glas:</strong> 2,5 dl
                          </span>
                        </div>
                      )}
 
-                     {/* Kokas - visa 100g torrt, 100g kokt, 1 dl kokt */}
+                     {/* Kokas - visa 2 dl kokt */}
                      {customCategory === 'Kokas' && specialMeasurements?.type === 'cooked' && (
                        <>
-                         <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                              {energyScore ? energyScore.per100g : '-'}
-                           </Badge>
-                           <span>
-                             <strong>100g torrt</strong>
-                           </span>
-                         </div>
-                         {specialMeasurements.swellingFactor && (
-                           <div className="flex items-center gap-2">
-                              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                                {energyScore ? Math.round(energyScore.per100g / specialMeasurements.swellingFactor) : '-'}
-                             </Badge>
-                             <span>
-                               <strong>100g kokt</strong> (svällfaktor: {specialMeasurements.swellingFactor}x)
-                             </span>
-                           </div>
-                         )}
                          {specialMeasurements.cookedDensity && specialMeasurements.swellingFactor && (
                            <div className="flex items-center gap-2">
                               <Badge variant="outline" className={`text-xs px-2 py-0.5 ${energyScore ? 'bg-warm-yellow/10 text-warm-yellow border-warm-yellow/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
-                                {energyScore ? Math.round((energyScore.per100g * specialMeasurements.cookedDensity) / (100 * specialMeasurements.swellingFactor)) : '-'}
+                                {energyScore ? Math.round((energyScore.per100g * specialMeasurements.cookedDensity * 2) / (100 * specialMeasurements.swellingFactor)) : '-'}
                              </Badge>
                              <span>
-                               <strong>1 dl kokt</strong> (~{specialMeasurements.cookedDensity}g/dl kokt)
+                               <strong>2 dl kokt</strong> (~{specialMeasurements.cookedDensity}g/dl kokt, svällfaktor: {specialMeasurements.swellingFactor}x)
                              </span>
                            </div>
                          )}

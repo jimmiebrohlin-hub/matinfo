@@ -32,10 +32,17 @@ const SWELLING_DATA: { [key: string]: { factor: number; density: number } } = {
   'pasta': { factor: 2.5, density: 55 },
   'spaghetti': { factor: 2.5, density: 55 },
   'makaroner': { factor: 2.5, density: 55 },
+  'penne': { factor: 2.5, density: 55 },
+  'tagliatelle': { factor: 2.5, density: 55 },
+  'farfalle': { factor: 2.5, density: 55 },
+  'lasagneplattor': { factor: 2.5, density: 55 },
   'nudlar': { factor: 2.5, density: 55 },
   'fusilli': { factor: 2.5, density: 55 },
   'spirali': { factor: 2.5, density: 55 },
   'ris': { factor: 3.0, density: 85 },
+  'jasminris': { factor: 3.0, density: 85 },
+  'basmatiris': { factor: 3.0, density: 85 },
+  'råris': { factor: 3.0, density: 85 },
   'bulgur': { factor: 2.5, density: 85 },
   'couscous': { factor: 2.5, density: 80 },
   'quinoa': { factor: 3.0, density: 85 },
@@ -52,24 +59,30 @@ function normalizeText(text: string): string {
 
 function containsKeyword(text: string, keywords: string[]): boolean {
   const normalizedText = normalizeText(text);
-    return keywords.some(keyword => {
-      const normalizedKeyword = normalizeText(keyword);
-      return normalizedText.includes(normalizedKeyword);
-    });
+  return keywords.some(keyword => {
+    const normalizedKeyword = normalizeText(keyword);
+    // Word boundary regex to avoid partial matches
+    const regex = new RegExp(`\\b${normalizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(normalizedText);
+  });
 }
 
 function containsExclusion(text: string, exclusions: string[]): boolean {
   const normalizedText = normalizeText(text);
-  return exclusions.some(exclusion => 
-    normalizedText.includes(normalizeText(exclusion))
-  );
+  return exclusions.some(exclusion => {
+    const normalizedExclusion = normalizeText(exclusion);
+    const regex = new RegExp(`\\b${normalizedExclusion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(normalizedText);
+  });
 }
 
 function containsCategoryString(text: string, categoryStrings: string[]): boolean {
   const normalizedText = normalizeText(text);
-  return categoryStrings.some(catStr => 
-    normalizedText.includes(normalizeText(catStr))
-  );
+  return categoryStrings.some(catStr => {
+    const normalizedCat = normalizeText(catStr);
+    const regex = new RegExp(`\\b${normalizedCat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(normalizedText);
+  });
 }
 
 function findVolumeDensityKeyword(text: string): string {
@@ -116,12 +129,14 @@ export function detectProductCategory(
 
   // 1. KOKAS (högst prioritet) - Torrvaror som sväller vid kokning
   const kokasKeywords = [
-    'pasta', 'spaghetti', 'makaroner', 'nudlar', 'spirali', 'fusilli', 
-    'ris', 'bulgur', 'couscous', 'quinoa', 'linser', 'bönor'
+    'pasta', 'spaghetti', 'makaroner', 'penne', 'tagliatelle', 'farfalle', 
+    'lasagneplattor', 'nudlar', 'spirali', 'fusilli', 
+    'ris', 'jasminris', 'basmatiris', 'råris', 'bulgur', 'couscous', 'quinoa', 'linser', 'bönor'
   ];
   const kokasCategoryStrings = ['en:pastas', 'en:rices'];
   const kokasExclusions = [
-    'gröt', 'färdigkokt', 'burk', 'konserverad', 'sås', 'risifrutti', 'pudding'
+    'gröt', 'färdigkokt', 'burk', 'konserverad', 'sås', 'risifrutti', 'pudding',
+    'kaffe', 'coffee', 'kaffebönor', 'brygg', 'rost'
   ];
   
   if (!containsExclusion(searchText, kokasExclusions) && 
@@ -141,34 +156,13 @@ export function detectProductCategory(
     };
   }
 
-  // 2. VOLYMVARA - Torrvaror med specifik volymvikt
-  const volymvaraKeywords = [
-    'mjöl', 'vetemjöl', 'rågmjöl', 'graham mjöl', 'socker', 'strösocker',
-    'gryn', 'kakao', 'panko', 'ströbröd', 'flingor', 'müsli', 'flour', 'sugar'
-  ];
-  const volymvaraExclusions = ['gröt', 'kaka', 'kex', 'bulle', 'choklad', 'bars'];
-  
-  if (!containsExclusion(searchText, volymvaraExclusions) && 
-      containsKeyword(searchText, volymvaraKeywords)) {
-    const keyword = findVolumeDensityKeyword(searchText);
-    const volumeDensity = VOLUME_DENSITIES[keyword];
-    
-    return { 
-      customCategory: "Volymvara",
-      specialMeasurements: {
-        type: 'volume',
-        volumeDensity: volumeDensity,
-        keyword: keyword
-      }
-    };
-  }
-
-  // 3. DRYCK - Flytande produkter som konsumeras i glas
+  // 2. DRYCK - Flytande produkter som konsumeras i glas
   const dryckKeywords = [
     'dryck', 'läsk', 'juice', 'saft', 'mjölk', 'vatten', 'smoothie', 
     'cider', 'must', 'festis', 'mer', 'trocadero', 'zingo', 'ramlösa', 
     'loka', 'havredryck', 'sojadryck', 'energidryck', 'kaffedryck', 
-    'ikaffe', 'beverage', 'drink', 'soda', 'cola', 'cappuccino'
+    'ikaffe', 'beverage', 'drink', 'soda', 'cola', 'cappuccino',
+    'lemonade', 'iced tea', 'sports drink', 'energy drink', 'oat drink', 'almond drink'
   ];
   const dryckCategoryStrings = [
     'en:beverages', 'en:drinks', 'en:plant-based beverages', 
@@ -190,12 +184,41 @@ export function detectProductCategory(
     };
   }
 
+  // 3. VOLYMVARA - Torrvaror med specifik volymvikt (kräver OFF-taggar)
+  const volymvaraKeywords = [
+    'mjöl', 'vetemjöl', 'rågmjöl', 'graham mjöl', 'socker', 'strösocker',
+    'gryn', 'kakao', 'panko', 'ströbröd', 'flingor', 'müsli', 'flour', 'sugar'
+  ];
+  const volymvaraCategoryStrings = [
+    'en:flours', 'en:cereals', 'en:breakfast-cereals', 'en:breadcrumbs'
+  ];
+  const volymvaraExclusions = [
+    'gröt', 'kaka', 'kex', 'bulle', 'choklad', 'bars',
+    'dryck', 'juice', 'mjölk', 'beverage', 'drink'
+  ];
+  
+  if (!containsExclusion(searchText, volymvaraExclusions) && 
+      containsKeyword(searchText, volymvaraKeywords) &&
+      containsCategoryString(searchText, volymvaraCategoryStrings)) {
+    const keyword = findVolumeDensityKeyword(searchText);
+    const volumeDensity = VOLUME_DENSITIES[keyword];
+    
+    return { 
+      customCategory: "Volymvara",
+      specialMeasurements: {
+        type: 'volume',
+        volumeDensity: volumeDensity,
+        keyword: keyword
+      }
+    };
+  }
+
   // 4. SKIVBART - Bröd (högst prioritet inom skivbart)
   // 4a. Bröd - visa "en skiva (30g)"
   const brodKeywords = [
     'bröd', 'limpa', 'knäckebröd', 'tunnbröd', 'formfranska', 'jättefranska', 
     'rågbröd', 'surdegsbröd', 'frökusar', 'rågkusar', 'rågkaka', 'bread', 
-    'loaf', 'crispbread', 'franska', 'tortilla'
+    'loaf', 'crispbread', 'franska', 'tortilla', 'baguette', 'pitabröd'
   ];
   const brodCategoryStrings = [
     'en:breads', 'en:crispbreads', 'en:baguettes', 'en:sliced breads',
@@ -224,7 +247,8 @@ export function detectProductCategory(
   const ostCategoryStrings = ['en:cheeses'];
   const ostExclusions = [
     'färskost', 'cream cheese', 'ostkaka', 'cottage cheese', 'keso',
-    'cottage cheeses', 'en:cream cheeses', 'fresh cheeses'
+    'cottage cheeses', 'en:cream cheeses', 'fresh cheeses',
+    'ricotta', 'feta', 'halloumi'
   ];
   
   if (!containsExclusion(searchText, ostExclusions) && 
@@ -265,7 +289,7 @@ export function detectProductCategory(
     };
   }
 
-  // 5. KRÄMIGT - Produkter som används i små mängder (1 tsk 5g, 1 msk 15g, 1 dl 100g)
+  // 5. KRÄMIGT - Produkter som används i små mängder (kräver OFF-taggar)
   const kramiktKeywords = [
     'yoghurt', 'kvarg', 'keso', 'cottage cheese', 'crème fraîche', 
     'creme fraiche', 'gräddfil', 'färskost', 'smör', 'margarin', 
@@ -278,8 +302,13 @@ export function detectProductCategory(
     'en:sauces', 'en:condiments', 'cottage cheeses', 'en:cream cheeses',
     'dairy desserts', 'fresh cheeses'
   ];
+  const kramiktExclusions = [
+    'fisk', 'sardiner', 'fiskbullar', 'konserv'
+  ];
   
-  if (containsKeyword(searchText, kramiktKeywords) || 
+  if (!containsExclusion(searchText, kramiktExclusions) &&
+      (containsKeyword(searchText, kramiktKeywords) || 
+       containsCategoryString(searchText, kramiktCategoryStrings)) &&
       containsCategoryString(searchText, kramiktCategoryStrings)) {
     return { 
       customCategory: "Krämigt",
@@ -337,33 +366,23 @@ export function calculateNutritionValues(
 
   // Dryck calculations
   if (customCategory === 'Dryck' && specialMeasurements?.type === 'glass') {
-    // 1 glas = 2 dl = 200g (for liquids, assume density = 1)
-    calculations.per_glas_2dl = {};
+    // 1 glas = 2,5 dl = 250g (for liquids, assume density = 1)
+    calculations.per_glas_25dl = {};
     for (const [key, value] of Object.entries(nutritionPer100g)) {
-      calculations.per_glas_2dl[key] = value * 2;
+      calculations.per_glas_25dl[key] = value * 2.5;
     }
   }
 
   // Kokas calculations
   if (customCategory === 'Kokas' && specialMeasurements?.type === 'cooked') {
-    // 100g kokt
-    if (specialMeasurements.swellingFactor) {
-      const swellingFactor = specialMeasurements.swellingFactor;
-      const dryWeightFor100gCooked = 100 / swellingFactor;
-      calculations.per_100g_kokt = {};
-      for (const [key, value] of Object.entries(nutritionPer100g)) {
-        calculations.per_100g_kokt[key] = value * dryWeightFor100gCooked / 100;
-      }
-    }
-
-    // 1 dl kokt
+    // 2 dl kokt
     if (specialMeasurements.cookedDensity && specialMeasurements.swellingFactor) {
       const cookedDensity = specialMeasurements.cookedDensity;
       const swellingFactor = specialMeasurements.swellingFactor;
-      const dryWeightFor1dlCooked = cookedDensity / swellingFactor;
-      calculations.per_1dl_kokt = {};
+      const dryWeightFor2dlCooked = (cookedDensity * 2) / swellingFactor;
+      calculations.per_2dl_kokt = {};
       for (const [key, value] of Object.entries(nutritionPer100g)) {
-        calculations.per_1dl_kokt[key] = value * dryWeightFor1dlCooked / 100;
+        calculations.per_2dl_kokt[key] = value * dryWeightFor2dlCooked / 100;
       }
     }
   }
