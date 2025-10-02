@@ -280,24 +280,24 @@ export class OpenFoodFactsService {
    * Get product by barcode/EAN
    */
   /**
-   * Search for products by text (product name)
+   * Search for products by text (product name) using v1 API for better search results
    */
   static async searchProductsByText(searchText: string): Promise<Product[]> {
     try {
       console.log(`🔍 Searching for products with text: "${searchText}"`);
       
-      // Use API v2 directly as it's more reliable
+      // Use v1 API (search.pl) which provides better free-text search results
       const searchParams = new URLSearchParams({
         search_terms: searchText.trim(),
-        sort_by: "unique_scans_n",
-        page_size: "50",
-        page: "1",
-        fields: "code,product_name,product_name_en,product_name_sv,brands,image_url,image_front_url,nutriscore_grade,ecoscore_grade,nova_group,categories,ingredients_text,ingredients_text_sv,nutriments,quantity,serving_size,serving_quantity,net_weight_unit,net_weight_value,packaging,product_quantity"
+        search_simple: "1",
+        action: "process",
+        json: "1",
+        page_size: "50"
       });
 
-      console.log(`📍 Search URL: ${BASE_URL}/api/v2/search?${searchParams}`);
+      console.log(`📍 Search URL: ${BASE_URL}/cgi/search.pl?${searchParams}`);
       
-      const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
+      const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
