@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ProductCard, Product } from "@/components/ProductCard";
 import { ProductHistory } from "@/components/ProductHistory";
 import { ManualEanInput } from "@/components/ManualEanInput";
-import { CameraTest } from "@/components/CameraTest";
 import { OpenFoodFactsService } from "@/services/openFoodFactsService";
 import { Loader2, Sparkles, ShoppingCart } from "lucide-react";
 
@@ -156,11 +155,6 @@ const Index = () => {
           
           {/* Product Discovery Section */}
           <div className="flex-1 space-y-6">
-            {/* Camera Test Button */}
-            <div className="flex justify-center">
-              <CameraTest />
-            </div>
-
             {/* Manual EAN Input */}
             <ManualEanInput 
               onProductFound={handleProductFound} 
