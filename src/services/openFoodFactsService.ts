@@ -170,28 +170,43 @@ export class OpenFoodFactsService {
     // Extract package weight from various possible fields (improved to prioritize quantity)
     let package_weight = undefined;
     
+    // Helper function to extract weight from text
+    const extractWeightFromText = (text: string, source: string): number | undefined => {
+      if (!text) return undefined;
+      
+      // Look for patterns like "185 g", "85g", "3 oz (85 g)", "240g", "1.5 kg", "700g"
+      const weightMatch = text.match(/(?:\((\d+(?:[,.]?\d+)?)\s*g\))|(\d+(?:[,.]?\d+)?)\s*g(?:\b|$|\s)/i);
+      if (weightMatch) {
+        const weightValue = weightMatch[1] || weightMatch[2];
+        const weight = parseFloat(weightValue.replace(',', '.'));
+        console.log(`✅ Found weight from ${source}: ${weight}g`);
+        return weight;
+      }
+      
+      // Try kg to g conversion
+      const kgMatch = text.match(/(\d+(?:[,.]?\d+)?)\s*kg(?:\b|$|\s)/i);
+      if (kgMatch) {
+        const weight = parseFloat(kgMatch[1].replace(',', '.')) * 1000;
+        console.log(`✅ Found weight from ${source} (kg): ${weight}g`);
+        return weight;
+      }
+      
+      return undefined;
+    };
+    
     // Try quantity first (this is usually the most reliable - OFF's main weight field)
     if (product.quantity) {
       const quantityStr = product.quantity.toString();
       console.log(`🔍 Processing quantity field: "${quantityStr}" for product: ${product.product_name || product.code}`);
-      
-      // Look for patterns like "185 g", "85g", "3 oz (85 g)", "240g", "1.5 kg"
-      // Enhanced regex to be more flexible with spacing and formats
-      const weightMatch = quantityStr.match(/(?:\((\d+(?:[,.]?\d+)?)\s*g\))|(\d+(?:[,.]?\d+)?)\s*g(?:\b|$)/i);
-      if (weightMatch) {
-        // Use the value in parentheses if available, otherwise use the direct match
-        const weightValue = weightMatch[1] || weightMatch[2];
-        package_weight = parseFloat(weightValue.replace(',', '.'));
-        console.log(`✅ Found weight from quantity: ${package_weight}g`);
-      } else {
-        // Try kg to g conversion
-        const kgMatch = quantityStr.match(/(\d+(?:[,.]?\d+)?)\s*kg(?:\b|$)/i);
-        if (kgMatch) {
-          package_weight = parseFloat(kgMatch[1].replace(',', '.')) * 1000;
-          console.log(`✅ Found weight from kg conversion: ${package_weight}g`);
-        } else {
-          console.log(`❌ No weight pattern found in quantity: "${quantityStr}"`);
-        }
+      package_weight = extractWeightFromText(quantityStr, 'quantity');
+    }
+    
+    // If quantity is missing or doesn't contain weight, check product names
+    if (!package_weight) {
+      const productName = product.product_name_en || product.product_name_sv || product.product_name || '';
+      if (productName) {
+        console.log(`🔍 Checking product name for weight: "${productName}"`);
+        package_weight = extractWeightFromText(productName, 'product_name');
       }
     }
     
@@ -208,30 +223,9 @@ export class OpenFoodFactsService {
       }
     }
     
-    // Extract from packaging text
+    // Extract from packaging text as fallback
     if (!package_weight && product.packaging) {
-      const weightMatch = product.packaging.match(/(\d+(?:[,.]?\d+)?)\s*g/i);
-      if (weightMatch) {
-        package_weight = parseFloat(weightMatch[1].replace(',', '.'));
-      }
-    }
-    
-    // Extract from product name (e.g., "O'Boy Pose 700g – Mondelez")
-    if (!package_weight) {
-      const productName = product.product_name || product.product_name_sv || product.product_name_en || '';
-      // Look for patterns like "700g", "700 g", "1.5kg", "1,5kg"
-      const nameWeightMatch = productName.match(/(\d+(?:[,.]?\d+)?)\s*g(?:\b|$|\s)/i);
-      if (nameWeightMatch) {
-        package_weight = parseFloat(nameWeightMatch[1].replace(',', '.'));
-        console.log(`✅ Found weight from product name: ${package_weight}g`);
-      } else {
-        // Try kg to g conversion from name
-        const nameKgMatch = productName.match(/(\d+(?:[,.]?\d+)?)\s*kg(?:\b|$|\s)/i);
-        if (nameKgMatch) {
-          package_weight = parseFloat(nameKgMatch[1].replace(',', '.')) * 1000;
-          console.log(`✅ Found weight from product name (kg): ${package_weight}g`);
-        }
-      }
+      package_weight = extractWeightFromText(product.packaging, 'packaging');
     }
 
     // Extract pieces per package using improved logic
