@@ -96,8 +96,9 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isLoading) {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoading) {
       handleSearch();
     }
   };
@@ -129,7 +130,7 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
   return (
     <Card className="w-full max-w-md mx-auto shadow-card bg-gradient-card backdrop-blur-sm">
       <CardContent className="p-4 space-y-4">
-        <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-2">
           <Input
             type="text"
             placeholder="Sök produkt eller ange EAN-kod"
@@ -138,10 +139,9 @@ export const ManualEanInput = ({ onProductFound, onDiscoverProduct, isDiscoverin
               setSearchInput(e.target.value);
               setIsManuallyEntered(true);
             }}
-            onKeyPress={handleKeyPress}
             disabled={isLoading}
           />
-        </div>
+        </form>
         
         <div className="flex gap-2">
           <Button
