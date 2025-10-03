@@ -50,8 +50,7 @@ export class OpenFoodFactsService {
       const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'SvenskMatupptackaren/1.0'
+          'Accept': 'application/json'
         }
       });
       
@@ -100,8 +99,7 @@ export class OpenFoodFactsService {
       const response = await fetch(`${BASE_URL}/api/v2/search?${searchParams}`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'SvenskMatupptackaren/1.0'
+          'Accept': 'application/json'
         }
       });
 
@@ -312,8 +310,7 @@ export class OpenFoodFactsService {
       const response = await fetch(`${BASE_URL}/cgi/search.pl?${searchParams}`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'SvenskMatupptackaren/1.0'
+          'Accept': 'application/json'
         }
       });
       
