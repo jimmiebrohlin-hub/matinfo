@@ -41,7 +41,8 @@ export const exportProductsToCSV = async (products: Product[], filename: string 
         const { customCategory } = detectProductCategory(
           product.product_name || product.product_name_sv,
           product.categories,
-          product.brands
+          product.brands,
+          product.ingredients_text_sv || product.ingredients_text
         );
         
         return [

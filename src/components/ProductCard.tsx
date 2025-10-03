@@ -109,7 +109,12 @@ export const ProductCard = ({ product, isLoading }: ProductCardProps) => {
   }
 
   // Get product category using the centralized function
-  const categoryResult = detectProductCategory(product.product_name, product.categories, product.brands);
+  const categoryResult = detectProductCategory(
+    product.product_name, 
+    product.categories, 
+    product.brands,
+    product.ingredients_text_sv || product.ingredients_text
+  );
   const { customCategory, specialMeasurements } = categoryResult;
 
   return (
