@@ -32,7 +32,7 @@ const Index = () => {
         
         // Get random products to fill up to 20 total
         const randomProducts: Product[] = [];
-        const targetTotal = 1000;
+        const targetTotal = 10;
         const attempts = Math.max(15, targetTotal - predefinedProducts.length + 5); // Extra attempts for safety
         
         for (let i = 0; i < attempts && (predefinedProducts.length + randomProducts.length) < targetTotal; i++) {
