@@ -1,7 +1,9 @@
 // Syfte-driven kategorisering för att visa relevanta näringsvärdesberäkningar
 
 export interface ProductCategoryResult {
-  customCategory: 'Skivbart' | 'Krämigt' | 'Dryck' | 'Kokas' | 'Volymvara' | 'Standard';
+  customCategory: string;
+  category: 'Skivbart' | 'Krämigt' | 'Dryck' | 'Kokas' | 'Volymvara' | 'Standard';
+  subcategory: string | null;
   specialMeasurements?: {
     type: 'slice' | 'spoon' | 'glass' | 'cooked' | 'volume';
     subcategory?: 'Bröd' | 'Ost' | 'Pålägg';
@@ -251,7 +253,11 @@ export function detectProductCategory(
   const brnd = brands || '';
   const ingr = ingredients || '';
 
-  if (!name && !cats && !brnd) return { customCategory: "Standard" };
+  if (!name && !cats && !brnd) return { 
+    customCategory: "Standard",
+    category: "Standard",
+    subcategory: null
+  };
 
   // === SCORING-BASED CATEGORIZATION ===
   const scores: CategoryScore[] = [];
@@ -416,7 +422,11 @@ export function detectProductCategory(
 
   // Find the highest scoring category
   if (scores.length === 0) {
-    return { customCategory: "Standard" };
+    return { 
+      customCategory: "Standard",
+      category: "Standard",
+      subcategory: null
+    };
   }
 
   scores.sort((a, b) => b.score - a.score);
@@ -428,6 +438,8 @@ export function detectProductCategory(
     const swellingData = SWELLING_DATA[keyword];
     return {
       customCategory: "Kokas",
+      category: "Kokas",
+      subcategory: null,
       specialMeasurements: {
         type: 'cooked',
         swellingFactor: swellingData.factor,
@@ -440,6 +452,8 @@ export function detectProductCategory(
   if (winner.category === 'Dryck') {
     return {
       customCategory: "Dryck",
+      category: "Dryck",
+      subcategory: null,
       specialMeasurements: {
         type: 'glass'
       }
@@ -451,6 +465,8 @@ export function detectProductCategory(
     const volumeDensity = VOLUME_DENSITIES[keyword];
     return {
       customCategory: "Volymvara",
+      category: "Volymvara",
+      subcategory: null,
       specialMeasurements: {
         type: 'volume',
         volumeDensity: volumeDensity,
@@ -462,6 +478,8 @@ export function detectProductCategory(
   if (winner.category.startsWith('Skivbart')) {
     return {
       customCategory: "Skivbart",
+      category: "Skivbart",
+      subcategory: winner.metadata.subcategory,
       specialMeasurements: {
         type: 'slice',
         subcategory: winner.metadata.subcategory,
@@ -473,13 +491,19 @@ export function detectProductCategory(
   if (winner.category === 'Krämigt') {
     return {
       customCategory: "Krämigt",
+      category: "Krämigt",
+      subcategory: null,
       specialMeasurements: {
         type: 'spoon'
       }
     };
   }
 
-  return { customCategory: "Standard" };
+  return { 
+    customCategory: "Standard",
+    category: "Standard",
+    subcategory: null
+  };
 }
 
 // Helper function to calculate nutrition values based on categorization

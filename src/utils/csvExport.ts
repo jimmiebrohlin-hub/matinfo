@@ -26,7 +26,7 @@ export const exportProductsToCSV = async (products: Product[], filename: string 
 
     // Comprehensive CSV headers
     const headers = [
-      "EAN", "Produktnamn", "Tillverkare", "Anpassad Kategori", "Kategorier", "Ingredienser",
+      "EAN", "Produktnamn", "Tillverkare", "Kategori", "Underkategori", "Kategorier", "Ingredienser",
       "Nutri-Score", "Eco-Score", "NOVA Grupp",
       "Energi (kJ/100g)", "Energi (kcal/100g)", "Fett (g/100g)", "Mättat fett (g/100g)",
       "Kolhydrater (g/100g)", "Socker (g/100g)", "Fiber (g/100g)", "Protein (g/100g)",
@@ -38,7 +38,7 @@ export const exportProductsToCSV = async (products: Product[], filename: string 
     const csvRows = [
       headers.join(","), // Header row
       ...completeProducts.map(product => {
-        const { customCategory } = detectProductCategory(
+        const { category, subcategory } = detectProductCategory(
           product.product_name || product.product_name_sv,
           product.categories,
           product.brands,
@@ -49,7 +49,8 @@ export const exportProductsToCSV = async (products: Product[], filename: string 
           `"${product.id || ""}"`,
           `"${(product.product_name_sv || product.product_name || "").replace(/"/g, '""')}"`,
           `"${(product.brands || "").replace(/"/g, '""')}"`,
-          `"${customCategory}"`,
+          `"${category}"`,
+          `"${subcategory || ""}"`,
           `"${(product.categories || "").replace(/"/g, '""')}"`,
           `"${(product.ingredients_text_sv || product.ingredients_text || "").replace(/"/g, '""')}"`,
           `"${product.nutriscore_grade || ""}"`,
